@@ -1,0 +1,3287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontier Transformation Readiness Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<script src="patterns.js"></script>
+<style>
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0e1117;
+  --surface: #161b22;
+  --elevated: #1c2333;
+  --border: #2a3040;
+  --border-bright: #3d4a5c;
+  --text: #e6edf3;
+  --text-sec: #8b949e;
+  --text-dim: #656d76;
+  --blue: #4393e5;
+  --blue-dim: rgba(67,147,229,0.12);
+  --amber: #e8a735;
+  --amber-dim: rgba(232,167,53,0.12);
+  --light: #f0f0f0;
+  --pink: #e56b9a;
+  --pink-dim: rgba(229,107,154,0.12);
+  --green: #00d4aa;
+  --orange: #ff9f43;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-heading: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ---- Light mode overrides ---- */
+.light-mode {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --elevated: #f0f1f4;
+  --border: #d8dce3;
+  --border-bright: #b8bfc9;
+  --text: #1a1d24;
+  --text-sec: #505862;
+  --text-dim: #808890;
+  --blue: #2b6ec2;
+  --blue-dim: rgba(43,110,194,0.10);
+  --amber: #b8860b;
+  --amber-dim: rgba(184,134,11,0.10);
+  --light: #2a2d35;
+  --pink: #c44d74;
+  --pink-dim: rgba(196,77,116,0.10);
+  --green: #00967a;
+  --orange: #d07a20;
+}
+
+html { scroll-behavior: smooth; }
+html, body { transition: background-color 0.3s ease, color 0.3s ease; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+#app {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+header {
+  padding: 32px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-sec);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.theme-toggle:hover { border-color: var(--text-sec); color: var(--text); }
+.theme-toggle-icon { font-size: 1rem; line-height: 1; }
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.logo img {
+  height: 32px;
+  width: auto;
+}
+
+.logo span { color: var(--blue); }
+
+/* ============================================================
+   PHASE INDICATOR
+   ============================================================ */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  transition: color 0.3s;
+}
+
+.step-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  color: var(--text-dim);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.step.active .step-num {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+.step.active { color: var(--text); }
+
+.step.done .step-num {
+  border-color: var(--blue);
+  background: transparent;
+  color: var(--blue);
+}
+.step.done { color: var(--text-sec); }
+
+.step-line {
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+  margin: 0 8px;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.step-line.done { background: var(--blue); }
+
+/* ============================================================
+   CONTENT TRANSITIONS
+   ============================================================ */
+#content {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+#content.fade-out {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* ============================================================
+   SHARED COMPONENTS
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.section-title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.section-sub {
+  font-size: 0.95rem;
+  color: var(--text-sec);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-primary:hover { background: #5aa3f0; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-sec);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--text-sec); color: var(--text); }
+
+/* ============================================================
+   PHASE 1: DECISION TREE
+   ============================================================ */
+.dt-question {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+  line-height: 1.35;
+}
+
+.dt-options { display: flex; flex-direction: column; gap: 10px; }
+
+.dt-opt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text);
+  transition: all 0.2s;
+  text-align: left;
+  line-height: 1.5;
+}
+.dt-opt:hover {
+  border-color: var(--blue);
+  background: var(--blue-dim);
+  transform: translateX(4px);
+}
+
+.dt-opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dt-opt-text { flex: 1; }
+.dt-opt-info {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  z-index: 2;
+}
+.dt-opt-info:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--blue-dim);
+}
+.dt-flyout {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 320px;
+  background: var(--elevated);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  z-index: 50;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: fadeUp 0.2s ease-out;
+  display: none;
+}
+.dt-flyout.visible { display: block; }
+.dt-flyout-title {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.dt-flyout-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dt-flyout-list li {
+  font-size: 0.8rem;
+  color: var(--text-sec);
+  line-height: 1.4;
+  padding-left: 14px;
+  position: relative;
+}
+.dt-flyout-list li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--text-dim);
+}
+
+/* Back arrow for Phase 3 */
+.q-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.2s;
+  text-decoration: none;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  padding: 0;
+}
+.q-back:hover { color: var(--text-sec); }
+
+/* ============================================================
+   PHASE 2: SCENARIO + PATTERN SELECT
+   ============================================================ */
+.scenario-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 32px;
+}
+.scenario-card .pattern-name {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+.scenario-card .vignette {
+  font-size: 0.95rem;
+  color: var(--text-sec);
+  line-height: 1.7;
+  font-style: italic;
+}
+
+.pattern-group {
+  margin-bottom: 28px;
+}
+.pattern-group-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-sec);
+  margin-bottom: 12px;
+}
+
+.pattern-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pattern-chip {
+  padding: 10px 18px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sec);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pattern-chip:hover {
+  border-color: var(--text-sec);
+  color: var(--text);
+}
+.pattern-chip.selected {
+  border-color: var(--blue);
+  background: var(--blue-dim);
+  color: var(--blue);
+}
+
+/* VIGNETTE SELECTION CARDS */
+.vignette-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vignette-card {
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.vignette-card:hover {
+  border-color: var(--text-sec);
+  background: var(--elevated);
+}
+.vignette-card.selected {
+  border-color: var(--blue);
+  background: var(--blue-dim);
+}
+.vignette-card .vc-story {
+  font-size: 0.9rem;
+  color: var(--text-sec);
+  line-height: 1.5;
+}
+.vignette-card.selected .vc-story {
+  color: var(--text);
+}
+.vignette-card.not-started {
+  border-style: dashed;
+}
+.vignette-card.not-started .vc-story {
+  font-style: italic;
+}
+
+/* ============================================================
+   PHASE 3: ASSESSMENT
+   ============================================================ */
+.progress-wrap {
+  margin-bottom: 32px;
+}
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.progress-count {
+  font-size: 0.82rem;
+  color: var(--text-sec);
+  font-weight: 500;
+}
+.pillar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 100px;
+  background: var(--blue-dim);
+  color: var(--blue);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.pillar-badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* CONVERGENCE BARS — RIGHT SIDEBAR */
+.conv-sidebar {
+  position: fixed;
+  top: 50%;
+  right: max(24px, calc(50% - 560px));
+  transform: translateY(-50%);
+  width: 200px;
+  padding: 12px 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 50;
+  overflow: visible;
+}
+.conv-sidebar.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.conv-sidebar-title {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  padding-left: 58px;
+}
+.conv-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: visible;
+}
+.conv-scale {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.conv-scale-track {
+  position: relative;
+  height: 12px;
+}
+.conv-scale-track span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.conv-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+  overflow: visible;
+}
+.conv-pillar {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s;
+}
+.conv-pillar.answered { color: var(--text-sec); }
+.conv-pillar.active-p { color: var(--blue); }
+.conv-row.active-row {
+  background: var(--blue-dim);
+  border-radius: 3px;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+.conv-track {
+  position: relative;
+  height: 12px;
+  background: var(--elevated);
+  border-radius: 2px;
+  overflow: visible;
+  margin: 0 6px;
+}
+.conv-range {
+  position: absolute;
+  top: 1px; bottom: 1px;
+  border-radius: 1px;
+  transition: left 0.5s ease, width 0.5s ease, background 0.5s ease;
+}
+.conv-range.unknown {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.conv-range.narrowing {
+  background: var(--blue-dim);
+  border: 1px solid rgba(67,147,229,0.2);
+}
+.conv-range.locked {
+  background: transparent;
+  border: none;
+  width: 0 !important;
+}
+.conv-dot {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  transform: translate(-50%, -50%);
+  transition: left 0.5s ease, opacity 0.4s;
+  z-index: 3;
+}
+.conv-target {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--amber);
+  opacity: 0.4;
+  z-index: 2;
+}
+
+@media (max-width: 1100px) {
+  .conv-sidebar { display: none; }
+}
+
+.q-text {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 24px;
+  letter-spacing: -0.01em;
+}
+
+.options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+
+.opt-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.92rem;
+  color: var(--text-sec);
+  line-height: 1.55;
+}
+.opt-card:hover {
+  border-color: var(--border-bright);
+  border-left-color: var(--border-bright);
+  background: var(--elevated);
+  color: var(--text);
+}
+.opt-card.selected {
+  border-color: var(--blue);
+  border-left-color: var(--blue);
+  background: var(--blue-dim);
+  color: var(--text);
+}
+
+.opt-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s;
+  position: relative;
+}
+.opt-card.selected .opt-marker {
+  border-color: var(--blue);
+}
+.opt-card.selected .opt-marker::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+.q-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ============================================================
+   PHASE 4: RESULTS
+   ============================================================ */
+.results-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.results-header .section-title {
+  font-size: 2rem;
+  margin-bottom: 4px;
+}
+.overall-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border-radius: 100px;
+  background: var(--blue-dim);
+  color: var(--blue);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 12px;
+}
+.overall-badge .level-num {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.result-section {
+  margin-bottom: 48px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.5s ease forwards;
+}
+.result-section:nth-child(2) { animation-delay: 0.1s; }
+.result-section:nth-child(3) { animation-delay: 0.2s; }
+.result-section:nth-child(4) { animation-delay: 0.3s; }
+.result-section:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.result-section h2 {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+/* JOURNEY LADDER */
+.ladder-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  overflow-x: auto;
+}
+.ladder-wrap svg { display: block; margin: 0 auto; }
+
+.ladder-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-sec);
+}
+.legend-item svg { flex-shrink: 0; }
+
+/* RADAR CHART */
+.radar-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* GAP TABLE */
+.gap-list { display: flex; flex-direction: column; gap: 10px; }
+
+.gap-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.gap-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+.gap-status.on-track { background: var(--blue); }
+.gap-status.caution { background: var(--amber); }
+.gap-status.attention { background: var(--pink); }
+
+.gap-status.on-track::after,
+.gap-status.caution::after,
+.gap-status.attention::after {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.gap-detail { min-width: 0; }
+.gap-pillar {
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-bottom: 4px;
+}
+.gap-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.gap-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 6px;
+  position: relative;
+  overflow: visible;
+}
+.gap-bar-current {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--blue);
+  position: relative;
+}
+.gap-bar-target {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--light);
+  border-radius: 1px;
+}
+.gap-levels {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.gap-rec {
+  font-size: 0.84rem;
+  color: var(--text-sec);
+  line-height: 1.5;
+}
+
+.gap-badge {
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  align-self: center;
+}
+.gap-badge.on-track { background: var(--blue-dim); color: var(--blue); }
+.gap-badge.caution { background: var(--amber-dim); color: var(--amber); }
+.gap-badge.attention { background: var(--pink-dim); color: var(--pink); }
+
+/* ACTIONS */
+.results-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 48px;
+}
+
+/* FOCUSED RESULTS PAGE */
+.results-focus {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.results-pattern {
+  text-align: center;
+  margin-bottom: 12px;
+  animation: fadeUp 0.5s ease forwards;
+}
+.results-pattern-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.results-pattern-name {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: -0.02em;
+}
+.results-pattern-desc {
+  font-size: 0.88rem;
+  color: var(--text-sec);
+  line-height: 1.6;
+  margin-top: 10px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  font-style: italic;
+}
+
+.results-maturity {
+  text-align: center;
+  margin-bottom: 32px;
+  animation: fadeUp 0.5s ease 0.1s both;
+}
+.results-meta {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+.results-hero-chart {
+  margin-bottom: 48px;
+  animation: fadeUp 0.5s ease 0.2s both;
+}
+
+/* Hero convergence bars (expanded) */
+.hero-conv {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.hero-conv-scale {
+  position: relative;
+  height: 20px;
+  margin-left: 160px;
+  margin-right: 48px;
+  margin-bottom: 6px;
+}
+.hero-conv-scale span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hero-conv-row {
+  display: grid;
+  grid-template-columns: 190px 1fr 40px;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+}
+.hero-conv-pillar {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hero-conv-track {
+  position: relative;
+  height: 18px;
+  background: var(--elevated);
+  border-radius: 3px;
+  overflow: visible;
+  margin: 0 6px;
+}
+.hero-conv-target {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--light);
+  opacity: 0.6;
+}
+.hero-conv-target::after {
+  content: '★';
+}
+.hero-conv-dot {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  background: var(--blue);
+}
+.hero-conv-gap {
+  position: absolute;
+  top: 3px; bottom: 3px;
+  border-radius: 2px;
+  z-index: 1;
+  background: linear-gradient(to right, rgba(67,147,229,0.25), rgba(232,167,53,0.2));
+}
+.hero-conv-val {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.hero-conv-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 14px;
+  padding-left: 160px;
+}
+.hero-conv-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-sec);
+  font-weight: 500;
+}
+.hero-conv-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.hero-conv-legend-target {
+  font-size: 0.7rem;
+  color: var(--light);
+  opacity: 0.6;
+  line-height: 1;
+}
+
+/* Expandable chart rows */
+.hero-conv-row.has-gap { cursor: pointer; border-radius: 4px; transition: background 0.2s; margin: 0 -4px; padding: 0 4px; }
+.hero-conv-row.has-gap:hover { background: rgba(255,255,255,0.02); }
+.hero-conv-chevron { font-size: 0.55rem; color: var(--text-dim); transition: transform 0.3s; margin-left: 4px; }
+.hero-conv-row.open .hero-conv-chevron { transform: rotate(90deg); color: var(--blue); }
+.hero-conv-resources {
+  display: grid;
+  grid-template-columns: 150px 1fr 40px;
+  gap: 10px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.hero-conv-resources.open { max-height: 400px; }
+.hero-conv-res-inner {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px 0 8px 8px;
+  border-left: 2px solid var(--border);
+  margin-left: 6px;
+}
+/* RAI Ambient Chip */
+.rai-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(240, 200, 80, 0.08);
+  border: 1px solid rgba(240, 200, 80, 0.25);
+  border-radius: 20px;
+  padding: 6px 16px 6px 10px;
+  margin-top: 12px;
+  float: right;
+}
+.rai-chip-icon {
+  width: 16px;
+  height: 16px;
+  color: #f0c850;
+  flex-shrink: 0;
+}
+.rai-chip-label {
+  font-size: 12px;
+  color: #f0c850;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.rai-chip-score {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0c850;
+}
+.rai-chip-level {
+  font-size: 11px;
+  color: rgba(240, 200, 80, 0.6);
+  font-weight: 400;
+}
+.res-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--blue);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.res-link:hover { color: var(--light); }
+
+/* Action panel below chart */
+.action-panel {
+  margin-top: 32px;
+  animation: fadeUp 0.5s ease 0.35s both;
+}
+.action-panel-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.action-list { display: flex; flex-direction: column; gap: 8px; }
+.action-card {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--elevated);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--amber);
+}
+.action-num {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--amber);
+  text-align: center;
+}
+.action-pillar-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.action-gap-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.action-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--blue);
+  background: var(--blue-dim);
+  padding: 4px 10px;
+  border-radius: 100px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.action-chip:hover { background: rgba(67,147,229,0.2); color: var(--light); }
+
+.results-pillars-section {
+  animation: fadeUp 0.5s ease 0.3s both;
+}
+.results-pillars-section h2 {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.focus-pillar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.focus-pillar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  border-left: 3px solid var(--border);
+}
+.focus-pillar.on-track { border-left-color: var(--blue); }
+.focus-pillar.caution { border-left-color: var(--amber); }
+.focus-pillar.attention { border-left-color: var(--pink); }
+
+.focus-pillar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.focus-pillar-icon {
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.focus-pillar-icon.on-track { background: var(--blue-dim); color: var(--blue); }
+.focus-pillar-icon.caution { background: var(--amber-dim); color: var(--amber); }
+.focus-pillar-icon.attention { background: var(--pink-dim); color: var(--pink); }
+
+.focus-pillar-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  flex: 1;
+}
+
+.focus-pillar-score {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.focus-pillar-gap {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.focus-pillar-rec {
+  font-size: 0.78rem;
+  color: var(--text-sec);
+  line-height: 1.5;
+  padding-left: 28px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+/* QUESTION SUBTEXT */
+.q-subtext {
+  font-size: 0.88rem;
+  color: var(--text-sec);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* PHASE LABEL */
+.phase-label {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 10px;
+}
+.phase-label.discovery { background: var(--blue-dim); color: var(--blue); }
+.phase-label.deep-dive { background: var(--amber-dim); color: var(--amber); }
+
+/* PHASE TRANSITION MESSAGE */
+.phase-transition {
+  text-align: center;
+  padding: 60px 24px;
+  animation: fadeUp 0.5s ease forwards;
+}
+.phase-transition h2 {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.phase-transition p {
+  color: var(--text-sec);
+  font-size: 0.95rem;
+}
+
+/* RESTART LINK */
+.restart-link {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.restart-link:hover { color: var(--text-sec); }
+
+@media (max-width: 700px) {
+  #app { padding: 0 16px 60px; }
+  .section-title { font-size: 1.35rem; }
+  .dt-question { font-size: 1.2rem; }
+  .q-text { font-size: 1.15rem; }
+  .step-label { display: none; }
+  .step-line { width: 24px; }
+  .gap-row { grid-template-columns: auto 1fr; }
+  .gap-badge { grid-column: 2; }
+  .pattern-chips { flex-direction: column; }
+  .explore-card { padding: 14px 16px; }
+  .explore-card-top { gap: 10px; }
+  .explore-conv-scale { margin-left: 70px; margin-right: 32px; }
+  .explore-conv-row { grid-template-columns: 62px 1fr 32px; }
+  .explore-conv-legend { margin-left: 62px; }
+}
+
+/* ============================================================
+   EXPLORE OTHER PATTERNS
+   ============================================================ */
+.explore-section {
+  margin-top: 48px;
+  animation: fadeUp 0.5s ease 0.4s both;
+}
+.explore-section-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.explore-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.explore-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+.explore-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.explore-card.ecol-0::before { background: var(--green, #00d4aa); }
+.explore-card.ecol-1::before { background: var(--orange, #ff9f43); }
+.explore-card.ecol-2::before { background: var(--pink, #ff6b8a); }
+
+.explore-card:hover { border-color: var(--border-bright); background: var(--elevated); }
+.explore-card:hover::before { opacity: 0.5; }
+.explore-card.explore-open { border-color: var(--border-bright); background: var(--elevated); }
+.explore-card.explore-open::before { opacity: 1; }
+.explore-card.explore-open.ecol-0 { border-color: rgba(0,212,170,0.3); }
+.explore-card.explore-open.ecol-1 { border-color: rgba(255,159,67,0.3); }
+.explore-card.explore-open.ecol-2 { border-color: rgba(255,107,138,0.3); }
+
+.explore-card.explore-current {
+  opacity: 0.5;
+  cursor: default;
+}
+.explore-card.explore-current:hover { background: var(--surface); border-color: var(--border); }
+.explore-card.explore-current::before { opacity: 0; }
+
+.explore-card-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.explore-num {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  min-width: 18px;
+}
+.explore-info { flex: 1; min-width: 0; }
+.explore-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.explore-column-tag {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.ecol-0 .explore-column-tag { color: rgba(0,212,170,0.6); }
+.ecol-1 .explore-column-tag { color: rgba(255,159,67,0.6); }
+.ecol-2 .explore-column-tag { color: rgba(255,107,138,0.6); }
+
+.explore-current-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  background: var(--elevated);
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+/* Readiness bars */
+.explore-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 28px;
+}
+.explore-bar {
+  width: 7px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.explore-bar:nth-child(1) { height: 8px; }
+.explore-bar:nth-child(2) { height: 14px; }
+.explore-bar:nth-child(3) { height: 20px; }
+.explore-bar:nth-child(4) { height: 28px; }
+.ecol-0 .explore-bar.efilled { background: var(--green, #00d4aa); }
+.ecol-1 .explore-bar.efilled { background: var(--orange, #ff9f43); }
+.ecol-2 .explore-bar.efilled { background: var(--pink, #ff6b8a); }
+
+.explore-chevron {
+  font-size: 14px;
+  color: var(--text-dim);
+  transition: transform 0.3s ease, color 0.2s ease;
+  margin-left: 8px;
+}
+.explore-card.explore-open .explore-chevron { transform: rotate(90deg); }
+.ecol-0.explore-open .explore-chevron { color: var(--green, #00d4aa); }
+.ecol-1.explore-open .explore-chevron { color: var(--orange, #ff9f43); }
+.ecol-2.explore-open .explore-chevron { color: var(--pink, #ff6b8a); }
+
+/* Expanded detail */
+.explore-detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+  opacity: 0;
+}
+.explore-card.explore-open .explore-detail { max-height: 500px; opacity: 1; }
+.explore-detail-inner {
+  padding-top: 18px;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.explore-scenario {
+  font-size: 14px;
+  color: var(--text-sec);
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 18px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border);
+}
+
+/* Mini convergence chart in explore cards */
+.explore-conv-scale {
+  position: relative;
+  height: 18px;
+  margin-left: 100px;
+  margin-right: 40px;
+  margin-bottom: 4px;
+}
+.explore-conv-scale span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.explore-conv-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+}
+.explore-conv-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.explore-conv-track {
+  position: relative;
+  height: 16px;
+  background: var(--elevated);
+  border-radius: 3px;
+  overflow: visible;
+  margin: 0 4px;
+}
+.explore-conv-gap {
+  position: absolute;
+  top: 3px; bottom: 3px;
+  border-radius: 2px;
+  z-index: 1;
+  background: linear-gradient(to right, rgba(67,147,229,0.25), rgba(232,167,53,0.2));
+}
+.explore-conv-target {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--light);
+  opacity: 0.6;
+}
+.explore-conv-target::after { content: '★'; }
+.explore-conv-dot {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  background: var(--blue);
+}
+.explore-conv-val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.explore-conv-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+  margin-left: 92px;
+}
+.explore-conv-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: var(--text-sec);
+  font-weight: 500;
+}
+.explore-conv-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.explore-conv-legend-star {
+  font-size: 0.65rem;
+  color: var(--light);
+  opacity: 0.6;
+}
+.explore-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 10px 22px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ecol-0 .explore-view-btn { background: var(--green, #00d4aa); color: #0a0f14; }
+.ecol-1 .explore-view-btn { background: var(--orange, #ff9f43); color: #0a0f14; }
+.ecol-2 .explore-view-btn { background: var(--pink, #ff6b8a); color: #0a0f14; }
+.explore-view-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-row">
+      <div class="logo"><img src="cat-logo.svg" alt="CAPE"> Frontier <span>Transformation Readiness Assessment</span></div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+        <span class="theme-toggle-icon" id="theme-icon">☀️</span>
+      </button>
+    </div>
+    <nav class="steps" id="steps-nav"></nav>
+  </header>
+  <main id="content"></main>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const pillars = [
+  {id:1, name:"AI Strategy & Experience", short:"AI Strategy"},
+  {id:2, name:"Business Strategy", short:"Business"},
+  {id:3, name:"AI Governance & Security", short:"Governance"},
+  {id:4, name:"Technology & Data", short:"Tech & Data"},
+  {id:5, name:"Organization & Culture", short:"Culture"}
+];
+
+/* --- Discovery Questions (native 5-pillar + RAI cross-cutting) --- */
+const discoveryQuestions = [
+
+  // ============================================================
+  // PILLAR 1: AI Strategy & Experience
+  // ============================================================
+  {
+    id: "ai-strategy-anchor",
+    pillarId: 1,
+    isAnchor: true,
+    text: "How would you describe your organization's AI strategy today — not the aspirational version, but the one that actually drives decisions?",
+    subtext: "Think about what happens when a new AI initiative competes for budget or attention.",
+    options: [
+      { text: "We have a documented strategy with clear objectives, but translating it into consistent execution across business units is still a work in progress", level: 300 },
+      { text: "There really isn't one — teams experiment on their own and leadership hasn't weighed in on what AI should mean for us", level: 100 },
+      { text: "It's a living strategy — continuously refreshed based on real-world outcomes and market signals, with C-suite accountability for execution", level: 500 },
+      { text: "A vision exists and some leaders champion it, but it lives outside our core business planning — AI still feels like a parallel initiative", level: 200 },
+      { text: "AI strategy is fully embedded in enterprise planning — business units have aligned sub-plans and leadership actively reviews outcomes", level: 400 }
+    ]
+  },
+  {
+    id: "ai-strategy-refine-1",
+    pillarId: 1,
+    isAnchor: false,
+    text: "Think about the last time someone in your organization needed help from an AI agent. How would you describe that experience?",
+    subtext: "Consider the full journey — discovering the agent, using it, and getting a useful result.",
+    options: [
+      { text: "Agents are easy to find, consistently branded, and most people know which one to use for what — but personalization is limited", level: 300 },
+      { text: "It depends entirely on which team built it — some agents are polished, others are confusing, and there's no consistency", level: 200 },
+      { text: "Interacting with agents feels as natural as working with a colleague — they adapt to you, remember context, and keep improving on their own", level: 500 },
+      { text: "Most people wouldn't even know where to find an agent, or that one exists for their task", level: 100 },
+      { text: "People have seamless access through unified interfaces — agents adapt to individual needs and feel contextually appropriate", level: 400 }
+    ]
+  },
+  {
+    id: "ai-strategy-refine-2",
+    pillarId: 1,
+    isAnchor: false,
+    text: "When a major new AI capability launches — say a new model or platform feature — how does your organization decide whether and how to adopt it?",
+    subtext: "Think about the last time something genuinely new appeared on your radar.",
+    options: [
+      { text: "Enthusiasts experiment on their own, and if something sticks, it gets noticed eventually", level: 200 },
+      { text: "We evaluate it against our documented strategy and roadmap — if it aligns, it enters the planning process", level: 300 },
+      { text: "We don't have a mechanism for that — new capabilities are either ignored or adopted chaotically", level: 100 },
+      { text: "Our strategy dynamically incorporates new capabilities — telemetry and outcome data help us decide quickly what to pursue", level: 500 },
+      { text: "The Center of Excellence evaluates it, tests alignment with our architecture standards, and makes a recommendation to leadership", level: 400 }
+    ]
+  },
+
+  // ============================================================
+  // PILLAR 2: Business Strategy
+  // ============================================================
+  {
+    id: "business-strategy-anchor",
+    pillarId: 2,
+    isAnchor: true,
+    text: "Think about your organization's most important business processes. What role do AI agents actually play in them today?",
+    subtext: "Be honest about the gap between ambition and reality.",
+    options: [
+      { text: "Agents orchestrate multi-step workflows across systems — humans handle judgment calls and exceptions, but agents run most of the process", level: 400 },
+      { text: "Agents help individuals with personal tasks like drafting or summarizing, but they haven't changed how our core processes work", level: 100 },
+      { text: "Agents participate in executing specific steps within redesigned workflows, while humans manage the overall flow", level: 300 },
+      { text: "Core processes are agent-operated and adaptive — agents initiate, execute, and learn from outcomes in real time", level: 500 },
+      { text: "Agents handle some isolated steps — data lookups, drafting, routing — but people still drive every process end to end", level: 200 }
+    ]
+  },
+  {
+    id: "business-refine-1",
+    pillarId: 2,
+    isAnchor: false,
+    text: "When your leadership asks 'What's the ROI of our AI investment?' — how confident are you in the answer?",
+    subtext: "Think about whether you'd stake your reputation on the number.",
+    options: [
+      { text: "We can show real-time, enterprise-wide value — spanning efficiency, experience, and trust indicators — and the data drives investment decisions", level: 500 },
+      { text: "We don't have an answer — the best evidence is anecdotes and gut feel", level: 100 },
+      { text: "We have solid metrics for individual agents — time saved, error rates, satisfaction — but rolling it up enterprise-wide is hard", level: 300 },
+      { text: "Some teams track results, but everyone measures differently and there's no consistent methodology", level: 200 },
+      { text: "We have proven ROI across the portfolio, and underperformers are actively reviewed, redesigned, or retired based on the data", level: 400 }
+    ]
+  },
+  {
+    id: "business-refine-2",
+    pillarId: 2,
+    isAnchor: false,
+    text: "Your organization decides to completely redesign a major workflow around AI agents. What's the realistic starting point?",
+    subtext: "Think about what tools, methods, and shared understanding already exist.",
+    options: [
+      { text: "We'd start from scratch — there's no shared methodology, no process maps, and no one has done this before", level: 100 },
+      { text: "A few teams have done small redesigns, but there's no playbook — each one is a unique effort with ad hoc collaboration", level: 200 },
+      { text: "We'd pull from established transformation playbooks and reusable orchestration patterns — there's a clear methodology", level: 300 },
+      { text: "Process transformation is embedded in how we work — teams continuously evolve workflows, and the tooling makes redesign routine", level: 500 },
+      { text: "Business units would proactively propose it, supported by centralized standards and a federated execution model", level: 400 }
+    ]
+  },
+
+  // ============================================================
+  // PILLAR 3: AI Governance & Security
+  // ============================================================
+  {
+    id: "governance-anchor",
+    pillarId: 3,
+    isAnchor: true,
+    text: "If you had to explain your organization's approach to AI governance to a new board member in one sentence, what would it be?",
+    subtext: "Think about the reality, not the policy document.",
+    options: [
+      { text: "We have documented standards that are enforced — agents are classified by risk, and a governance body oversees high-risk cases", level: 300 },
+      { text: "Governance is risk-based and increasingly automated — lightweight controls for simple agents, enterprise rigor for critical ones", level: 400 },
+      { text: "We're still figuring it out — there's no AI-specific governance, and agents operate without formal oversight", level: 100 },
+      { text: "Our governance continuously adapts to new risks and regulations — it accelerates innovation rather than blocking it", level: 500 },
+      { text: "We have basic guidelines, but they're inconsistently applied — compliance depends on individual diligence more than enforced standards", level: 200 }
+    ]
+  },
+  {
+    id: "governance-refine-1",
+    pillarId: 3,
+    isAnchor: false,
+    text: "Your most critical AI agent starts behaving unexpectedly — giving inconsistent answers or making odd decisions. Walk me through what happens next.",
+    subtext: "Think about detection, response, and resolution — not just the ideal scenario.",
+    options: [
+      { text: "Users would eventually complain, and whoever built the agent would try to figure it out — there's no formal process", level: 100 },
+      { text: "A few knowledgeable people would investigate, but there's no defined runbook or escalation path — it depends on who's available", level: 200 },
+      { text: "Monitoring would flag it against defined thresholds, triggering an alert — documented runbooks guide the response", level: 300 },
+      { text: "It probably wouldn't get that far — predictive monitoring and self-healing systems would detect and correct the drift before users noticed", level: 500 },
+      { text: "Automated anomaly detection would trigger alerts and potentially automated remediation — the incident team has AI-specific response plans", level: 400 }
+    ]
+  },
+  {
+    id: "governance-refine-2",
+    pillarId: 3,
+    isAnchor: false,
+    text: "Does your organization treat a personal productivity agent — say, one that helps someone draft emails — the same as one that approves expense reports or handles customer data?",
+    subtext: "Think about whether the rules are actually different and whether those differences are enforced.",
+    options: [
+      { text: "They're formally classified into tiers with different governance requirements, but enforcement is mostly policy-based rather than platform-enforced", level: 300 },
+      { text: "We know they should be different, but in practice they're treated the same — there's no tiering system", level: 200 },
+      { text: "We haven't thought about it — an agent is an agent", level: 100 },
+      { text: "Different tiers get genuinely different treatment — lightweight controls for productivity agents, full enterprise ALM and compliance for critical ones — enforced by the platform", level: 400 },
+      { text: "Classifications evolve dynamically — agents get reclassified automatically as their scope, data access, or autonomy changes", level: 500 }
+    ]
+  },
+
+  // ============================================================
+  // PILLAR 4: Technology & Data
+  // ============================================================
+  {
+    id: "tech-data-anchor",
+    pillarId: 4,
+    isAnchor: true,
+    text: "If a team wanted to build and deploy an AI agent that pulls data from three different business systems, what would that journey actually look like?",
+    subtext: "Think about the full path — platform choice, data access, integration, testing, and deployment.",
+    options: [
+      { text: "They'd figure it out on their own — pick whatever tools they find, write custom integrations, and hope it works", level: 100 },
+      { text: "They'd start with an approved platform and some documented patterns, but data access and integration for each system would take real effort", level: 300 },
+      { text: "There's a clear path — reference architectures, certified datasets, governed APIs, and CI/CD pipelines handle most of the heavy lifting", level: 400 },
+      { text: "They'd converge on a platform someone else used, but each integration would be built from scratch with no standard connectors", level: 200 },
+      { text: "The platform makes it almost trivial — federated teams build independently while guardrails enforce quality by default", level: 500 }
+    ]
+  },
+  {
+    id: "tech-data-refine-1",
+    pillarId: 4,
+    isAnchor: false,
+    text: "How does your organization decide what data an AI agent is allowed to access — and how does it actually get that access?",
+    subtext: "Think about the realistic experience, not the architecture diagram.",
+    options: [
+      { text: "There's no formal process — teams connect agents to whatever data they can reach, sometimes via CSV exports or direct API calls", level: 100 },
+      { text: "Data is organized through a clear architecture — agents access validated, governed sources through documented patterns", level: 300 },
+      { text: "Data access is essentially solved — certified datasets, governed APIs, and self-service provisioning are standard", level: 500 },
+      { text: "Secure, governed APIs are the standard path — centralized telemetry tracks what data each agent actually uses", level: 400 },
+      { text: "Some approved connectors exist, but you usually end up building at least one custom integration per project", level: 200 }
+    ]
+  },
+  {
+    id: "tech-data-refine-2",
+    pillarId: 4,
+    isAnchor: false,
+    text: "What happens to an AI agent after it's deployed? Think about versioning, monitoring, and how changes get rolled out.",
+    subtext: "Consider the lifecycle — not just the launch.",
+    options: [
+      { text: "It mostly just runs — the person who built it might check on it occasionally, but there's no version control or monitoring", level: 100 },
+      { text: "Centralized monitoring and telemetry give full visibility into behavior and performance — deployments are automated and reliable", level: 400 },
+      { text: "Standards and practices continuously evolve — architecture reviews, experimentation, and shared learning keep the platform current", level: 500 },
+      { text: "ALM practices are established for production agents — there are defined environments, version control, and standard deployment patterns", level: 300 },
+      { text: "Version control is used inconsistently — some teams have CI/CD, others deploy manually, and documentation is lightweight", level: 200 }
+    ]
+  },
+
+  // ============================================================
+  // PILLAR 5: Organization & Culture
+  // ============================================================
+  {
+    id: "org-culture-anchor",
+    pillarId: 5,
+    isAnchor: true,
+    text: "If you stopped five random employees from different departments and asked them about AI agents, what range of answers would you hear?",
+    subtext: "Think across the whole organization, not just the tech-savvy teams.",
+    options: [
+      { text: "\"A few of us are really into it and keep trying to get others interested, but most people don't see the point yet\"", level: 200 },
+      { text: "\"It's part of how my team works — there are training programs, showcases, and my manager uses agents too\"", level: 300 },
+      { text: "\"I've heard of it, but I'm not sure what it means for my actual work — nobody's explained it to me\"", level: 100 },
+      { text: "\"I can't imagine doing my job without agents — it'd be like going back to doing everything by hand\"", level: 500 },
+      { text: "\"Everyone uses them and we're always finding new ways to apply them — it's just how we work now\"", level: 400 }
+    ]
+  },
+  {
+    id: "org-culture-refine-1",
+    pillarId: 5,
+    isAnchor: false,
+    text: "Who actually owns AI adoption in your organization — not on paper, but in practice?",
+    subtext: "Think about who makes decisions, resolves conflicts, and is accountable for outcomes.",
+    options: [
+      { text: "Nobody, really — different teams do their own thing and there's no coordinated effort", level: 100 },
+      { text: "A few motivated people drive it informally, but they have no formal authority or resources", level: 200 },
+      { text: "A dedicated team or Center of Excellence provides standards and enablement, while business units execute within those guardrails", level: 300 },
+      { text: "It's fully embedded — adoption is everyone's responsibility, with incentives and performance expectations that reinforce it", level: 500 },
+      { text: "Business units own it with strong central support — decision rights are clear, and leadership actively sponsors and reviews progress", level: 400 }
+    ]
+  },
+  {
+    id: "org-culture-refine-2",
+    pillarId: 5,
+    isAnchor: false,
+    text: "A frontline employee discovers a creative new way to use an AI agent that could benefit their entire department. What realistically happens to that idea?",
+    subtext: "Think about whether good ideas flow from the edges to the center.",
+    options: [
+      { text: "They'd share it with their team informally, and maybe it spreads through word of mouth within their group", level: 200 },
+      { text: "It stays with them — there's no mechanism to surface, evaluate, or scale ideas like that", level: 100 },
+      { text: "It enters a rapid evaluation pipeline — that's actually how many of our best practices originated, with governance built in from the start", level: 500 },
+      { text: "They'd post it in a community channel or present at a showcase, and a support team would help evaluate and standardize it", level: 300 },
+      { text: "Champion networks would pick it up and help adapt it for other departments, with proper governance along the way", level: 400 }
+    ]
+  },
+
+  // ============================================================
+  // PILLAR 0: RAI — Responsible AI (cross-cutting)
+  // ============================================================
+  {
+    id: "rai-1",
+    pillarId: 0,
+    isAnchor: false,
+    text: "An AI agent in your organization gives a customer a confident but completely wrong answer — and the customer acts on it. What happens?",
+    subtext: "Think about detection, escalation, and accountability — not just the apology.",
+    options: [
+      { text: "We'd find out when the customer complains — there's no proactive detection for this kind of failure", level: 100 },
+      { text: "Continuous monitoring flags confidence-accuracy mismatches, and the agent is designed to disclose uncertainty and cite sources — but incidents like this are rare by design", level: 500 },
+      { text: "It would trigger our AI incident process — a cross-functional team with clear decision rights would investigate root cause and update safeguards", level: 400 },
+      { text: "Someone on the team would notice eventually and try to fix it, but there's no formal escalation path or accountability structure", level: 200 },
+      { text: "Our responsible AI review process would catch it — high-risk agents have documented escalation procedures and mandatory human oversight for sensitive outputs", level: 300 }
+    ]
+  },
+  {
+    id: "rai-2",
+    pillarId: 0,
+    isAnchor: false,
+    text: "How does your organization ensure its AI agents treat all users fairly — across demographics, languages, roles, and regions?",
+    subtext: "Think about systematic practices, not just good intentions.",
+    options: [
+      { text: "We haven't really considered it — if there's a fairness problem, we wouldn't know", level: 100 },
+      { text: "Regular bias audits with diverse test cases are standard for high-risk agents, and Responsible AI impact assessments are required before deployment", level: 300 },
+      { text: "Fairness is embedded by design — automated bias detection runs continuously across all agents, and corrective actions are triggered proactively", level: 400 },
+      { text: "Some individuals care deeply about it and raise concerns when they see issues, but there's no systematic approach", level: 200 },
+      { text: "Fairness metrics are part of every agent's lifecycle — from training data audits through production monitoring — and we actively contribute to industry standards", level: 500 }
+    ]
+  }
+];
+
+const patternTargets = {
+  1:{name:PATTERNS[1].name,targets:[250,100,150,100,200]},
+  2:{name:PATTERNS[2].name,targets:[250,250,300,300,200]},
+  3:{name:PATTERNS[3].name,targets:[400,350,350,300,300]},
+  4:{name:PATTERNS[4].name,targets:[500,500,500,450,500]},
+  5:{name:PATTERNS[5].name,targets:[350,400,500,450,250]}
+};
+
+const scenarios = {
+  1:"A project manager starts Monday with 60 unread messages. Copilot summarizes priority threads, drafts replies, and highlights action items \u2014 all within the flow of existing work.",
+  2:"Finance SMEs get the same questions every day \u2014 \u2018Which policy applies?\u2019, \u2018What\u2019s the right code?\u2019 An agent trained on institutional knowledge handles routine queries, escalating edge cases to humans.",
+  3:"An employee needs parental leave info and a laptop replacement. Instead of navigating portals and waiting on tickets, a single agent handles intake, routes requests, tracks progress, and follows up.",
+  4:"A procurement request typically bounces between requester, manager approval, finance check, supplier onboarding. Agents orchestrate the entire flow, with humans stepping in only for judgment calls.",
+  5:"A retail colleague used to jump between disconnected systems to help customers. Now an agent surfaces relevant history, suggests actions, and handles routine follow-ups automatically."
+};
+
+const levelNames = {100:"Ad Hoc",200:"Emerging",300:"Defined",400:"Managed",500:"Optimizing"};
+
+/* ============================================================
+   ADAPTIVE ENGINE
+   ============================================================ */
+class AdaptiveEngine {
+  static pillars = pillars;
+
+  constructor(questions, patternTargets, aspirationalPatternId) {
+    this._allQuestions = questions;
+    this._patternTargets = patternTargets;
+    this._patternId = aspirationalPatternId;
+    const pattern = patternTargets[aspirationalPatternId];
+    if (!pattern) throw new Error('Unknown pattern ID: ' + aspirationalPatternId);
+    this._targets = pattern.targets; // 5-element array indexed 0-4 for pillar IDs 1-5
+
+    this._questionById = new Map(questions.map(q => [q.id, q]));
+
+    // Separate pillar questions (1-5) from RAI questions (0)
+    this._anchorByPillar = new Map();
+    this._refinementByPillar = new Map();
+    this._raiQuestions = [];
+
+    for (const q of questions) {
+      if (q.pillarId === 0) {
+        this._raiQuestions.push(q);
+        continue;
+      }
+      if (q.isAnchor) {
+        this._anchorByPillar.set(q.pillarId, q);
+      } else {
+        if (!this._refinementByPillar.has(q.pillarId)) this._refinementByPillar.set(q.pillarId, []);
+        this._refinementByPillar.get(q.pillarId).push(q);
+      }
+    }
+
+    // Determine which pillars to skip (target === 100)
+    this._skippedPillars = new Set();
+    for (let i = 0; i < this._targets.length; i++) {
+      if (this._targets[i] === 100) this._skippedPillars.add(i + 1);
+    }
+
+    // Build anchor queue from pillar IDs 1-5
+    this._queue = [];
+    for (let pid = 1; pid <= 5; pid++) {
+      if (this._skippedPillars.has(pid) || !this._anchorByPillar.has(pid)) continue;
+      this._queue.push(this._anchorByPillar.get(pid).id);
+    }
+
+    this._phase = this._queue.length > 0 ? 'anchors' : 'complete';
+    this._answers = new Map();
+    this._answerHistory = []; // ordered list of questionIds for undo
+    this._pillarsNeedingRefinement = [];
+    this._totalQuestions = this._queue.length;
+    this._raiQueued = false;
+
+    // Track answers per pillar ID (1-5 for pillars, 0 for RAI)
+    this._pillarLevels = new Map();
+    for (const pid of this._skippedPillars) this._pillarLevels.set(pid, [100]);
+
+    this._justTransitioned = false;
+  }
+
+  getNextQuestion() {
+    if (this._phase === 'complete' || this._queue.length === 0) return null;
+    return this._questionById.get(this._queue[0]) || null;
+  }
+
+  recordAnswer(questionId, selectedLevel) {
+    const wasNew = !this._answers.has(questionId);
+    this._answers.set(questionId, selectedLevel);
+    if (wasNew) this._answerHistory.push(questionId);
+    const question = this._questionById.get(questionId);
+    if (question) {
+      if (!this._pillarLevels.has(question.pillarId)) this._pillarLevels.set(question.pillarId, []);
+      const levels = this._pillarLevels.get(question.pillarId);
+      if (wasNew) {
+        levels.push(selectedLevel);
+      } else {
+        const qsForPillar = this._allQuestions.filter(q => q.pillarId === question.pillarId);
+        const qIdx = qsForPillar.indexOf(question);
+        if (qIdx >= 0 && qIdx < levels.length) levels[qIdx] = selectedLevel;
+      }
+    }
+    if (this._queue.length > 0 && this._queue[0] === questionId) this._queue.shift();
+    this._justTransitioned = false;
+    if (this._phase === 'anchors' && this._queue.length === 0) {
+      this._evaluateRefinement();
+      if (this._phase === 'refinement') this._justTransitioned = true;
+    }
+    if (this._phase === 'refinement' && this._queue.length === 0) this._phase = 'complete';
+  }
+
+  didJustTransition() { return this._justTransitioned; }
+  clearTransition() { return this._justTransitioned = false; }
+
+  canUndo() { return this._answerHistory.length > 0; }
+
+  undoLastAnswer() {
+    if (this._answerHistory.length === 0) return;
+    const lastQId = this._answerHistory.pop();
+    const question = this._questionById.get(lastQId);
+
+    // Remove from answers map
+    this._answers.delete(lastQId);
+
+    // Remove from pillar levels
+    if (question) {
+      const levels = this._pillarLevels.get(question.pillarId);
+      if (levels && levels.length > 0) levels.pop();
+      if (levels && levels.length === 0) this._pillarLevels.delete(question.pillarId);
+    }
+
+    // Put this question back at the front of the queue
+    this._queue.unshift(lastQId);
+
+    // Reset phase if we were in refinement/complete and the undone question was an anchor
+    if (question && question.isAnchor && this._phase !== 'anchors') {
+      this._phase = 'anchors';
+      // Re-filter queue to only contain anchors (refinement questions get re-evaluated)
+      this._queue = this._queue.filter(qid => {
+        const q = this._questionById.get(qid);
+        return q && q.isAnchor;
+      });
+      if (this._queue[0] !== lastQId) this._queue.unshift(lastQId);
+      this._pillarsNeedingRefinement = [];
+      this._raiQueued = false;
+    }
+
+    // If we undid an RAI question, un-mark RAI as queued if no RAI questions remain answered
+    if (question && question.pillarId === 0) {
+      const raiAnswered = this._raiQuestions.some(rq => this._answers.has(rq.id));
+      if (!raiAnswered) this._raiQueued = false;
+    }
+
+    if (this._phase === 'complete') this._phase = 'refinement';
+    this._justTransitioned = false;
+    this._totalQuestions = Math.max(this._totalQuestions, this._answers.size + this._queue.length);
+  }
+
+  getProgress() {
+    const answered = this._answers.size;
+    const total = this._totalQuestions;
+    const nextQ = this.getNextQuestion();
+    let currentPillar = null;
+    if (nextQ) {
+      if (nextQ.pillarId === 0) {
+        currentPillar = { id: 0, name: "Responsible AI & Trust", short: "RAI" };
+      } else {
+        currentPillar = pillars.find(p => p.id === nextQ.pillarId) || null;
+      }
+    }
+    return { phase: this._phase, answered, total, currentPillar,
+      percentComplete: total > 0 ? Math.round((answered / total) * 100) : 100 };
+  }
+
+  // Direct 5-pillar scoring with 70% avg + 30% min (weakest-link bias)
+  getScores() {
+    const scores = {};
+    for (const p of pillars) {
+      const levels = this._pillarLevels.get(p.id);
+      if (!levels || levels.length === 0) { scores[p.id] = 100; continue; }
+      if (levels.length === 1) { scores[p.id] = levels[0]; continue; }
+      const avg = levels.reduce((a, b) => a + b, 0) / levels.length;
+      const min = Math.min(...levels);
+      scores[p.id] = roundTo50(avg * 0.7 + min * 0.3);
+    }
+    return scores;
+  }
+
+  // RAI score: average of RAI question answers (100-500), or null if unanswered
+  getRaiScore() {
+    const raiLevels = this._pillarLevels.get(0);
+    if (!raiLevels || raiLevels.length === 0) return null;
+    const avg = raiLevels.reduce((a, b) => a + b, 0) / raiLevels.length;
+    return roundTo50(avg);
+  }
+
+  isComplete() { return this._phase === 'complete'; }
+
+  getPillarBrackets() {
+    const brackets = {};
+    for (const p of pillars) {
+      const levels = this._pillarLevels.get(p.id);
+      const isSkipped = this._skippedPillars.has(p.id);
+      if (isSkipped) { brackets[p.id] = { score: 100, lo: 100, hi: 100, status: 'done' }; continue; }
+      if (!levels || levels.length === 0) { brackets[p.id] = { score: null, lo: 100, hi: 500, status: 'unknown' }; continue; }
+      const avg = levels.reduce((a, b) => a + b, 0) / levels.length;
+      const score = roundTo50(avg);
+      const needsRefinement = this._pillarsNeedingRefinement.includes(p.id);
+      const refinements = this._refinementByPillar.get(p.id) || [];
+      const answeredRefinements = refinements.filter(rq => this._answers.has(rq.id)).length;
+      if (this._phase === 'anchors') {
+        brackets[p.id] = { score, lo: Math.max(100, score - 100), hi: Math.min(500, score + 100), status: 'anchor' };
+      } else if (needsRefinement) {
+        if (answeredRefinements >= refinements.length) {
+          brackets[p.id] = { score, lo: score, hi: score, status: 'done' };
+        } else {
+          const spread = (refinements.length - answeredRefinements) > 1 ? 100 : 50;
+          brackets[p.id] = { score, lo: Math.max(100, score - spread), hi: Math.min(500, score + spread), status: 'refining' };
+        }
+      } else {
+        brackets[p.id] = { score, lo: score, hi: score, status: 'done' };
+      }
+    }
+    return brackets;
+  }
+
+  _evaluateRefinement() {
+    this._pillarsNeedingRefinement = [];
+    for (let pid = 1; pid <= 5; pid++) {
+      if (this._skippedPillars.has(pid)) continue;
+      const targetLevel = this._targets[pid - 1];
+      const anchorQ = this._anchorByPillar.get(pid);
+      if (!anchorQ) continue;
+      const anchorLevel = this._answers.get(anchorQ.id);
+      if (anchorLevel === undefined) continue;
+      // Fuzzy zone: within 100 points of target
+      if (anchorLevel >= targetLevel - 100 && anchorLevel <= targetLevel) {
+        this._pillarsNeedingRefinement.push(pid);
+        const refinements = this._refinementByPillar.get(pid) || [];
+        for (const rq of refinements) this._queue.push(rq.id);
+      }
+    }
+    // Interleave RAI questions into refinement phase
+    if (!this._raiQueued) {
+      for (const rq of this._raiQuestions) this._queue.push(rq.id);
+      this._raiQueued = true;
+    }
+    this._totalQuestions = this._answers.size + this._queue.length;
+    this._phase = this._queue.length > 0 ? 'refinement' : 'complete';
+  }
+}
+
+const pillarRecs = {
+  1:{200:"Document your AI vision with ethical guidelines and engage leadership sponsors",300:"Develop a formal AI strategy with executive backing, a clear roadmap, and RAI standards",400:"Integrate AI planning into enterprise cycles with governance and lifecycle-embedded RAI checks",500:"Establish continuous strategy evolution driven by outcomes telemetry and responsible AI monitoring"},
+  2:{200:"Identify high-value workflows and begin tracking basic usage and satisfaction metrics",300:"Redesign end-to-end workflows with standard KPIs and measurement owners",400:"Enable cross-system orchestration with value tracking embedded in governance",500:"Evolve to agent-operated processes with enterprise-wide value dashboards"},
+  3:{200:"Establish basic guidelines for agent creation, ownership, and security awareness",300:"Implement formal governance with review checkpoints, SLAs, and monitoring",400:"Deploy risk-based automated controls with proactive monitoring and alerting",500:"Achieve continuous compliance with predictive analytics and self-optimizing operations"},
+  4:{200:"Converge on recommended platforms and establish basic data access patterns",300:"Document technology standards with curated data sources and governed access",400:"Build enterprise architecture with automated CI/CD, evaluations, and telemetry",500:"Mature to federated development on a shared platform with quality guardrails"},
+  5:{200:"Build AI awareness across the organization and identify early champions",300:"Launch structured learning paths, onboarding programs, and community events",400:"Deploy role-based enablement with active champion networks and leadership modeling",500:"Embed AI literacy into performance management, onboarding, and incentive structures"}
+};
+
+// Gap-specific activities keyed by [pillarId][targetLevel].
+// Each level lists concrete steps to reach that maturity level.
+const pillarActivities = {
+  1: {
+    200: [
+      { icon: '🎯', action: 'Identify 2–3 high-impact use cases for initial AI agent pilots' },
+      { icon: '📋', action: 'Secure an executive sponsor and document an initial AI vision statement' },
+      { icon: '🔍', action: 'Gather user feedback on current friction points with existing tools' },
+    ],
+    300: [
+      { icon: '📘', action: 'Publish a formal AI strategy with target outcomes and guiding principles' },
+      { icon: '🤝', action: 'Align business and IT stakeholders through cross-functional workshops' },
+      { icon: '🎓', action: 'Create standardized agent onboarding and user training programs' },
+    ],
+    400: [
+      { icon: '📊', action: 'Embed AI planning into enterprise budgeting and planning cycles' },
+      { icon: '⚙️', action: 'Implement personalized agent experiences based on role and context' },
+      { icon: '📈', action: 'Define metrics linking AI adoption outcomes to business performance' },
+    ],
+    500: [
+      { icon: '🔄', action: 'Establish continuous strategy refresh driven by outcomes telemetry' },
+      { icon: '🗓️', action: 'Extend strategic planning to multiyear AI transformation horizons' },
+      { icon: '🚀', action: 'Pioneer next-generation AI interaction paradigms across the enterprise' },
+    ],
+  },
+  2: {
+    200: [
+      { icon: '🗺️', action: 'Map one high-impact process end-to-end and identify agent touchpoints' },
+      { icon: '📊', action: 'Define baseline metrics for productivity, quality, and cost' },
+      { icon: '📋', action: 'Capture before-and-after data for active AI initiatives' },
+    ],
+    300: [
+      { icon: '🤝', action: 'Run AI-first process redesign workshops with cross-functional teams' },
+      { icon: '📐', action: 'Introduce a standard value measurement template across all agents' },
+      { icon: '📈', action: 'Aggregate results across initiatives to identify scaling patterns' },
+    ],
+    400: [
+      { icon: '🔗', action: 'Extend process redesign to cross-functional, cross-system workflows' },
+      { icon: '📊', action: 'Roll up agent KPIs into a central value dashboard for leadership' },
+      { icon: '📘', action: 'Standardize process transformation playbooks for reuse' },
+    ],
+    500: [
+      { icon: '🤖', action: 'Enable autonomous agent decision-making in low-risk scenarios' },
+      { icon: '📈', action: 'Automate real-time value tracking with comparative analysis' },
+      { icon: '🔄', action: 'Implement continuous process optimization based on outcomes data' },
+    ],
+  },
+  3: {
+    200: [
+      { icon: '🔐', action: 'Define who can create, publish, and share agents across the org' },
+      { icon: '👤', action: 'Assign clear ownership and accountability for each deployed agent' },
+      { icon: '📋', action: 'Implement basic logging, usage tracking, and feedback channels' },
+    ],
+    300: [
+      { icon: '🛡️', action: 'Publish baseline controls for identity, access, and data governance' },
+      { icon: '✅', action: 'Formalize review checkpoints and compliance requirements' },
+      { icon: '📊', action: 'Classify agents by purpose, criticality, and autonomy level' },
+      { icon: '🚨', action: 'Establish incident handling and escalation procedures' },
+    ],
+    400: [
+      { icon: '⚙️', action: 'Automate environment provisioning and policy enforcement' },
+      { icon: '🔗', action: 'Federate low-risk approvals to teams within central guardrails' },
+      { icon: '📘', action: 'Standardize operational runbooks by agent classification tier' },
+      { icon: '📅', action: 'Schedule regular performance and quality reviews for all agents' },
+    ],
+    500: [
+      { icon: '🤖', action: 'Expand automation to approvals, monitoring, and compliance reporting' },
+      { icon: '📊', action: 'Introduce KPI-based governance using incident and trust signals' },
+      { icon: '🔄', action: 'Deploy predictive maintenance and self-healing for critical agents' },
+    ],
+  },
+  4: {
+    200: [
+      { icon: '🏗️', action: 'Standardize on approved platforms and document selection criteria' },
+      { icon: '🔍', action: 'Inventory data sources and document connectivity gaps' },
+      { icon: '📋', action: 'Establish basic platform selection criteria by use-case complexity' },
+    ],
+    300: [
+      { icon: '📐', action: 'Define reference architectures and reusable integration patterns' },
+      { icon: '⚙️', action: 'Establish standard CI/CD pipelines and solution templates' },
+      { icon: '🔗', action: 'Create approved connector catalog with governed data access' },
+    ],
+    400: [
+      { icon: '📊', action: 'Embed monitoring, logging, and automated evaluation into architecture' },
+      { icon: '🧪', action: 'Validate single-agent vs multi-agent needs through experiments' },
+      { icon: '📁', action: 'Expand and certify datasets for high-value business domains' },
+    ],
+    500: [
+      { icon: '🌐', action: 'Shift from central to federated delivery with embedded guardrails' },
+      { icon: '🔄', action: 'Evolve standards to support higher autonomy and new agent patterns' },
+      { icon: '🚀', action: 'Continuously evaluate and incorporate emerging AI capabilities' },
+    ],
+  },
+  5: {
+    200: [
+      { icon: '📢', action: 'Establish visible executive sponsorship with a shared AI narrative' },
+      { icon: '🌟', action: 'Identify early champions and share wins to build momentum' },
+      { icon: '🎓', action: 'Introduce basic Responsible AI awareness and principles training' },
+    ],
+    300: [
+      { icon: '📋', action: 'Document baseline AI operating model with roles and decision rights' },
+      { icon: '🎯', action: 'Launch structured upskilling and community enablement programs' },
+      { icon: '💬', action: 'Create a dedicated internal community space for knowledge sharing' },
+    ],
+    400: [
+      { icon: '🔗', action: 'Embed the AI operating model into planning and governance cycles' },
+      { icon: '🌐', action: 'Expand champion networks and recognition across departments' },
+      { icon: '📊', action: 'Introduce adoption metrics and confidence tracking dashboards' },
+    ],
+    500: [
+      { icon: '🎯', action: 'Align incentives and performance expectations to AI-first outcomes' },
+      { icon: '🛡️', action: 'Develop advanced Responsible AI competencies organization-wide' },
+      { icon: '🔄', action: 'Use sentiment and feedback data to continuously refine cultural norms' },
+    ],
+  },
+};
+
+// Helper: get activities for the next maturity level a pillar needs to reach
+function getNextActivities(pillarId, currentScore) {
+  const nextLvl = Math.min(500, Math.max(200, (Math.floor(currentScore / 100) + 1) * 100));
+  return pillarActivities[pillarId]?.[nextLvl] || [];
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  phase: 1,
+  dtStep: 0,
+  suggestedPattern: null,
+  engine: null,
+  selectedAnswer: null,
+  isDemo: new URLSearchParams(window.location.search).has('demo')
+};
+
+// Show a demo-mode banner when ?demo=1 is in the URL
+if (state.isDemo) {
+  const banner = document.createElement('div');
+  banner.textContent = 'DEMO MODE';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff9f43;color:#1a1a1a;font-size:11px;font-weight:700;letter-spacing:1px;text-align:center;padding:4px 8px;text-transform:uppercase;box-shadow:0 2px 6px rgba(0,0,0,0.3)';
+  document.body.appendChild(banner);
+  document.body.style.paddingTop = '24px';
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const content = () => $('content');
+
+function roundTo50(v) {
+  return Math.max(100, Math.min(500, Math.round(v / 50) * 50));
+}
+
+function transition(renderFn) {
+  const c = content();
+  c.classList.add('fade-out');
+  setTimeout(() => {
+    renderFn();
+    c.classList.remove('fade-out');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }, 350);
+}
+
+/* ============================================================
+   STEP NAV
+   ============================================================ */
+const stepLabels = ['Discover','Assess','Results'];
+function renderSteps() {
+  const nav = $('steps-nav');
+  let h = '';
+  stepLabels.forEach((label, i) => {
+    const phase = i + 1;
+    let cls = '';
+    if (phase < state.phase) cls = 'done';
+    else if (phase === state.phase) cls = 'active';
+    h += `<div class="step ${cls}"><div class="step-num">${phase}</div><span class="step-label">${label}</span></div>`;
+    if (i < 2) h += `<div class="step-line ${phase < state.phase ? 'done' : ''}"></div>`;
+  });
+  nav.innerHTML = h;
+}
+
+/* ============================================================
+   PHASE 1: DECISION TREE
+   ============================================================ */
+const dtQuestions = [
+  {
+    text: "What are you primarily trying to achieve with AI agents?",
+    options: [
+      {text:"Help individuals be more productive", pattern:1},
+      {text:"Scale expert knowledge that\u2019s trapped in a few people\u2019s heads", pattern:2},
+      {text:"Transform how a department or function delivers services", pattern:3},
+      {text:"Automate complex business processes across systems", pattern:4},
+      {text:"Serve customers or partners through AI-powered experiences", pattern:5}
+    ]
+  },
+  {
+    text: "Is this focused on internal workplace services or broader business operations?",
+    options: [
+      {text:"Workplace services (HR, IT, Finance help desks, employee experience)", pattern:3},
+      {text:"Broader business operations (supply chain, procurement, field ops)", pattern:4}
+    ]
+  }
+];
+
+const patternExamples = {
+  1: ["Copilot summarizes email threads and drafts replies", "Meeting recap agents that capture action items", "Personal research assistants for competitive analysis"],
+  2: ["Policy Q&A agent trained on institutional knowledge", "Tax code advisor that handles routine queries", "Engineering standards agent for design reviews"],
+  3: ["IT help desk agent that resolves tickets end-to-end", "HR onboarding assistant for new employees", "Finance expense routing and approval agent"],
+  4: ["Procurement orchestration across approval chains", "Supply chain demand-sensing and reorder agent", "Claims processing with automated adjudication"],
+  5: ["Customer support agent with full account history", "Personalized product recommendation engine", "Partner onboarding and self-service portal agent"]
+};
+
+function renderPhase1() {
+  state.startedAt = Date.now();
+  const q = dtQuestions[state.dtStep];
+  let optsHtml = q.options.map((o, i) => {
+    const pid = o.pattern || (o.next !== undefined ? null : null);
+    const infoBtn = pid && patternExamples[pid]
+      ? `<span class="dt-opt-info" onclick="event.stopPropagation(); toggleFlyout(${i})" title="See examples">?</span>`
+      : '';
+    const flyout = pid && patternExamples[pid]
+      ? `<div class="dt-flyout" id="flyout-${i}">
+          <div class="dt-flyout-title">Examples</div>
+          <ul class="dt-flyout-list">${patternExamples[pid].map(ex => `<li>${ex}</li>`).join('')}</ul>
+        </div>`
+      : '';
+    return `<button class="dt-opt" onclick="dtSelect(${i})">
+      <span class="dt-opt-text">${o.text}</span>
+      ${infoBtn}${flyout}
+    </button>`;
+  }).join('');
+
+  const backHtml = state.dtStep > 0
+    ? `<button class="q-back" onclick="dtBack()" style="margin-bottom:16px;">← Back</button>`
+    : '';
+
+  content().innerHTML = `
+    <div style="max-width:640px;margin:0 auto;">
+      ${backHtml}
+      <p class="section-sub" style="margin-bottom:12px;">Let\u2019s start by understanding your goals.</p>
+      <div class="dt-question">${q.text}</div>
+      <div class="dt-options">${optsHtml}</div>
+    </div>`;
+}
+
+window.toggleFlyout = function(idx) {
+  const el = document.getElementById('flyout-' + idx);
+  if (!el) return;
+  const wasVisible = el.classList.contains('visible');
+  document.querySelectorAll('.dt-flyout.visible').forEach(f => f.classList.remove('visible'));
+  if (!wasVisible) el.classList.add('visible');
+};
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.dt-opt-info') && !e.target.closest('.dt-flyout')) {
+    document.querySelectorAll('.dt-flyout.visible').forEach(f => f.classList.remove('visible'));
+  }
+});
+
+window.dtBack = function() {
+  if (state.dtStep > 0) {
+    state.dtStep = 0;
+    transition(renderPhase1);
+  }
+};
+
+window.dtSelect = function(i) {
+  const q = dtQuestions[state.dtStep];
+  const opt = q.options[i];
+  if (opt.pattern) {
+    state.suggestedPattern = opt.pattern;
+    state.phase = 2;
+    renderSteps();
+    transition(renderPhase2);
+  } else if (opt.next !== undefined) {
+    state.dtStep = opt.next;
+    transition(renderPhase1);
+  }
+};
+
+/* ============================================================
+   PHASE 2: SCENARIO CONFIRMATION
+   ============================================================ */
+function renderPhase2() {
+  const sp = state.suggestedPattern;
+
+  content().innerHTML = `
+    <div style="max-width:640px;margin:0 auto;">
+      <p class="section-sub" style="margin-bottom:4px;">Based on your answer, this sounds like your goal:</p>
+      <div class="scenario-card">
+        <div class="pattern-name">${patternTargets[sp].name}</div>
+        <div class="vignette">\u201C${scenarios[sp]}\u201D</div>
+      </div>
+
+      <p class="section-sub" style="margin-top:24px;">We\u2019ll benchmark your maturity against what this goal requires across 5 capability pillars.</p>
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button class="btn btn-ghost" onclick="goBack2()">That\u2019s not quite right</button>
+        <button class="btn btn-primary" onclick="goPhase3()">Start Assessment</button>
+      </div>
+    </div>`;
+}
+
+window.goBack2 = function() {
+  state.phase = 1;
+  state.dtStep = 0;
+  renderSteps();
+  transition(renderPhase1);
+};
+
+window.goPhase3 = function() {
+  if (!state.suggestedPattern) return;
+  state.phase = 3;
+  state.engine = new AdaptiveEngine(discoveryQuestions, patternTargets, state.suggestedPattern);
+  state.selectedAnswer = null;
+  renderSteps();
+  transition(renderPhase3);
+};
+
+/* ============================================================
+   PHASE 3: ADAPTIVE BEHAVIORAL ASSESSMENT
+   ============================================================ */
+function renderPhase3() {
+  if (!state.engine) return;
+
+  // Check for phase transition message
+  if (state.engine.didJustTransition()) {
+    state.engine.clearTransition();
+    content().innerHTML = `
+      <div class="phase-transition">
+        <h2>Great \u2014 we have a clear picture of the landscape</h2>
+        <p>Based on your answers, we\u2019re diving deeper into a few areas where precision matters most for your goals.</p>
+      </div>`;
+    setTimeout(() => { transition(renderPhase3); }, 2200);
+    return;
+  }
+
+  const q = state.engine.getNextQuestion();
+  if (!q || state.engine.isComplete()) {
+    state.phase = 4;
+    renderSteps();
+    const sb = document.getElementById('conv-sidebar');
+    if (sb) sb.classList.remove('visible');
+    transition(renderPhase4);
+    return;
+  }
+
+  const progress = state.engine.getProgress();
+  const p = progress.currentPillar;
+  const phaseName = progress.phase === 'anchors' ? 'Discovery' : 'Deep Dive';
+  const phaseClass = progress.phase === 'anchors' ? 'discovery' : 'deep-dive';
+  const pct = progress.percentComplete;
+
+  let optsHtml = q.options.map((o, oi) =>
+    `<div class="opt-card ${state.selectedAnswer === o.level ? 'selected' : ''}" onclick="pickOpt('${q.id}',${o.level})">
+       <div class="opt-marker"></div>
+       <div>${o.text}</div>
+     </div>`
+  ).join('');
+
+  const brackets = state.engine.getPillarBrackets();
+  const targets = patternTargets[state.suggestedPattern]?.targets || [];
+  const hasAnyAnswer = pillars.some(pl => brackets[pl.id].score !== null);
+
+  let convHtml = '';
+  // Scale header
+  convHtml += '<div class="conv-scale"><div></div><div class="conv-scale-track">';
+  for (let lvl = 100; lvl <= 500; lvl += 100) {
+    convHtml += `<span style="left:${((lvl - 100) / 400) * 100}%">${lvl}</span>`;
+  }
+  convHtml += '</div></div>';
+  // Pillar rows
+  pillars.forEach((pl, i) => {
+    const b = brackets[pl.id];
+    const isActive = p && pl.id === p.id;
+    const lo = ((b.lo - 100) / 400) * 100;
+    const hi = ((b.hi - 100) / 400) * 100;
+    const w = hi - lo;
+    const targetPct = ((targets[i] - 100) / 400) * 100;
+    let rangeClass = 'unknown';
+    if (b.status === 'done') rangeClass = b.lo === b.hi ? 'locked' : 'narrowing';
+    else if (b.status === 'anchor' || b.status === 'refining') rangeClass = 'narrowing';
+    const pillarClass = isActive ? 'active-p' : (b.score !== null ? 'answered' : '');
+    const rowClass = isActive ? 'active-row' : '';
+    const isLocked = b.status === 'done' && b.lo === b.hi;
+    const scorePct = b.score !== null ? ((b.score - 100) / 400) * 100 : 0;
+    const dotHtml = isLocked ? `<div class="conv-dot" style="left:${scorePct}%"></div>` : '';
+    convHtml += `<div class="conv-row ${rowClass}">
+      <div class="conv-pillar ${pillarClass}">${pl.short}</div>
+      <div class="conv-track">
+        <div class="conv-range ${rangeClass}" style="left:${lo}%;width:${w}%"></div>
+        ${dotHtml}
+      </div>
+    </div>`;
+  });
+
+  // Render sidebar
+  let sidebar = document.getElementById('conv-sidebar');
+  if (!sidebar) {
+    sidebar = document.createElement('div');
+    sidebar.id = 'conv-sidebar';
+    sidebar.className = 'conv-sidebar';
+    document.body.appendChild(sidebar);
+  }
+  sidebar.className = `conv-sidebar ${hasAnyAnswer ? 'visible' : ''}`;
+  sidebar.innerHTML = `<div class="conv-sidebar-title">Maturity Range</div><div class="conv-strip">${convHtml}</div>`;
+
+  content().innerHTML = `
+    <div style="max-width:680px;margin:0 auto;">
+      <div class="progress-wrap">
+        <div class="progress-info">
+          <span class="pillar-badge">${p ? p.short : ''}</span>
+          <span class="phase-label ${phaseClass}">${phaseName}</span>
+          <span class="progress-count">Question ${progress.answered + 1} of ~${progress.total}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="q-text">${q.text}</div>
+      ${q.subtext ? `<div class="q-subtext">${q.subtext}</div>` : ''}
+      <div class="options-list">${optsHtml}</div>
+      <div class="q-nav">
+        ${state.engine && state.engine.canUndo()
+          ? '<button class="q-back" onclick="goBackQuestion()">← Back</button>'
+          : '<a class="restart-link" onclick="restartAssessment()">Start assessment over</a>'}
+        <button class="btn btn-primary" onclick="advanceQuestion()" ${state.selectedAnswer !== null ? '' : 'disabled'}>
+          Next \u2192
+        </button>
+      </div>
+    </div>`;
+}
+
+window.pickOpt = function(qId, level) {
+  state.selectedAnswer = level;
+  renderPhase3();
+};
+
+window.advanceQuestion = function() {
+  if (state.selectedAnswer === null || !state.engine) return;
+  const q = state.engine.getNextQuestion();
+  if (!q) return;
+  state.engine.recordAnswer(q.id, state.selectedAnswer);
+  state.selectedAnswer = null;
+
+  if (state.engine.isComplete()) {
+    state.phase = 4;
+    renderSteps();
+    const sb = document.getElementById('conv-sidebar');
+    if (sb) sb.classList.remove('visible');
+    transition(renderPhase4);
+  } else {
+    transition(renderPhase3);
+  }
+};
+
+window.goBackQuestion = function() {
+  if (!state.engine || !state.engine.canUndo()) return;
+  state.engine.undoLastAnswer();
+  state.selectedAnswer = null;
+  transition(renderPhase3);
+};
+
+window.restartAssessment = function() {
+  state.phase = 2;
+  state.engine = null;
+  state.selectedAnswer = null;
+  const sb = document.getElementById('conv-sidebar');
+  if (sb) sb.classList.remove('visible');
+  renderSteps();
+  transition(renderPhase2);
+};
+
+/* ============================================================
+   PHASE 4: RESULTS
+   ============================================================ */
+function renderPhase4() {
+  const scoreMap = state.engine.getScores();
+  const scores = pillars.map(p => scoreMap[p.id]);
+  const targets = patternTargets[state.suggestedPattern]?.targets || null;
+  const overall = roundTo50(scores.reduce((a,b)=>a+b,0) / scores.length);
+  const overallName = levelNames[Math.min(500, Math.max(100, Math.round(overall/100)*100))];
+  const patternName = patternTargets[state.suggestedPattern]?.name || '';
+  const answeredCount = state.engine.getProgress().answered;
+
+  // Build compact pillar status rows
+  let pillarRows = pillars.map((p, i) => {
+    const current = scores[i];
+    const target = targets ? targets[i] : current;
+    const gap = target - current;
+    let statusCls, statusIcon;
+    if (gap <= 0) { statusCls = 'on-track'; statusIcon = '✓'; }
+    else if (gap <= 100) { statusCls = 'caution'; statusIcon = '→'; }
+    else { statusCls = 'attention'; statusIcon = '↑'; }
+
+    const targetLvl = Math.min(500, Math.max(200, Math.ceil(target / 100) * 100));
+    const rec = gap <= 0
+      ? "Maintain this strength"
+      : (pillarRecs[p.id]?.[targetLvl] || pillarRecs[p.id]?.[Math.min(500, targetLvl + 100)] || "Strengthen this area");
+
+    return `
+      <div class="focus-pillar ${statusCls}">
+        <div class="focus-pillar-header">
+          <span class="focus-pillar-icon ${statusCls}">${statusIcon}</span>
+          <span class="focus-pillar-name">${p.short}</span>
+          <span class="focus-pillar-score">${current}</span>
+          ${gap > 0 ? `<span class="focus-pillar-gap">→ ${target}</span>` : ''}
+        </div>
+        <div class="focus-pillar-rec">${rec}</div>
+      </div>`;
+  }).join('');
+
+  // Build hero convergence chart (expanded version of sidebar)
+
+  let heroConvHtml = '<div class="hero-conv"><div class="hero-conv-scale">';
+  for (let lvl = 100; lvl <= 500; lvl += 100) {
+    heroConvHtml += `<span style="left:${((lvl - 100) / 400) * 100}%">${lvl} · ${levelNames[lvl]}</span>`;
+  }
+  heroConvHtml += '</div>';
+  pillars.forEach((pl, i) => {
+    const current = scores[i];
+    const target = targets ? targets[i] : current;
+    const scorePct = ((current - 100) / 400) * 100;
+    const targetPct = ((target - 100) / 400) * 100;
+    const gap = target - current;
+    let statusCls = gap <= 0 ? 'on-track' : (gap <= 100 ? 'caution' : 'attention');
+    const gapHtml = gap > 0 ? `<div class="hero-conv-gap" style="left:${scorePct}%;width:${targetPct - scorePct}%"></div>` : '';
+    const hasGap = gap > 0;
+    const chevron = hasGap ? '<span class="hero-conv-chevron">▶</span>' : '';
+    const rowCls = hasGap ? 'hero-conv-row has-gap' : 'hero-conv-row';
+    const clickAttr = hasGap ? `onclick="toggleGapRow(this)"` : '';
+
+    heroConvHtml += `<div class="${rowCls}" ${clickAttr}>
+      <div class="hero-conv-pillar">${pl.name}${chevron}</div>
+      <div class="hero-conv-track">
+        ${gapHtml}
+        <div class="hero-conv-target" style="left:${targetPct}%"></div>
+        <div class="hero-conv-dot" style="left:${scorePct}%"></div>
+      </div>
+      <div class="hero-conv-val">${current}</div>
+    </div>`;
+
+    if (hasGap) {
+      const acts = getNextActivities(pl.id, current);
+      const resHtml = acts.map(a => `<a class="res-link">${a.icon} ${a.action}</a>`).join('');
+      heroConvHtml += `<div class="hero-conv-resources"><div class="hero-conv-res-inner">${resHtml}</div></div>`;
+    }
+  });
+  heroConvHtml += '<div class="hero-conv-legend">';
+  heroConvHtml += '<span class="hero-conv-legend-item"><span class="hero-conv-legend-dot"></span> Your score</span>';
+  heroConvHtml += `<span class="hero-conv-legend-item"><span class="hero-conv-legend-target">★</span> ${patternName} target</span>`;
+  heroConvHtml += '</div></div>';
+
+  // Build action panel for gaps
+  const gapPillars = pillars.map((pl, i) => ({
+    pillar: pl, score: scores[i], target: targets ? targets[i] : scores[i], gap: (targets ? targets[i] : scores[i]) - scores[i]
+  })).filter(g => g.gap > 0).sort((a, b) => b.gap - a.gap);
+
+  let actionHtml = '';
+  if (gapPillars.length > 0) {
+    actionHtml = '<div class="action-panel"><div class="action-panel-title">Recommended Actions</div><div class="action-list">';
+    gapPillars.forEach((g, idx) => {
+      const acts = getNextActivities(g.pillar.id, g.score);
+      const chips = acts.map(a => `<a class="action-chip">${a.icon} ${a.action}</a>`).join('');
+      actionHtml += `<div class="action-card">
+        <div class="action-num">${idx + 1}</div>
+        <div>
+          <div class="action-pillar-name">${g.pillar.name}</div>
+          <div class="action-gap-label">${g.score} → ${g.target} · Gap of ${g.gap}</div>
+          <div class="action-chips">${chips}</div>
+        </div>
+      </div>`;
+    });
+    actionHtml += '</div></div>';
+  }
+
+  // Build RAI chip (ambient chip)
+  let raiChipHtml = '';
+  const raiScore = state.engine.getRaiScore();
+  if (raiScore !== null) {
+    const raiLevelName = levelNames[Math.min(500, Math.max(100, Math.round(raiScore/100)*100))];
+    raiChipHtml = `
+      <div class="rai-chip">
+        <svg class="rai-chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span class="rai-chip-label">Responsible AI</span>
+        <span class="rai-chip-score">${raiScore}</span>
+        <span class="rai-chip-level">${raiLevelName}</span>
+      </div>`;
+  }
+
+  content().innerHTML = `
+    <div class="results-focus">
+      <div class="results-pattern">
+        <div class="results-pattern-label">Your Agentic Transformation Pattern</div>
+        <div class="results-pattern-name">${patternName}</div>
+        <div class="results-pattern-desc">${scenarios[state.suggestedPattern]}</div>
+        <button class="btn btn-primary" style="margin-top:20px;display:inline-flex;align-items:center" onclick="downloadPDF()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Report
+        </button>
+      </div>
+
+      <div class="results-hero-chart">
+        ${heroConvHtml}
+        ${raiChipHtml}
+      </div>
+
+      ${actionHtml}
+
+      ${buildExploreSection(scores, state.suggestedPattern)}
+
+      <div class="results-actions result-section">
+        <button class="btn btn-ghost" onclick="startOver()">Start Over</button>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   PATTERN READINESS COMPUTATION
+   ============================================================ */
+function computeReadiness(scores, targets) {
+  let totalGap = 0, pillarsReady = 0;
+  for (let i = 0; i < scores.length; i++) {
+    const gap = Math.max(0, targets[i] - scores[i]);
+    totalGap += gap;
+    if (gap <= 0) pillarsReady++;
+  }
+  const avgGap = totalGap / scores.length;
+  if (pillarsReady === scores.length) return 4;
+  if (avgGap <= 50) return 3;
+  if (avgGap <= 150) return 2;
+  return 1;
+}
+
+function buildExploreSection(scores, currentPatternId) {
+  const colNames = COLUMNS;
+  let html = '<div class="explore-section"><div class="explore-section-title">Explore Other Patterns</div><div class="explore-list">';
+
+  for (const [id, pat] of Object.entries(patternTargets)) {
+    const col = PATTERNS[id].column;
+    const colClass = 'ecol-' + col;
+    const isCurrent = String(id) === String(currentPatternId);
+    const bars = computeReadiness(scores, pat.targets);
+
+    let barsHtml = '';
+    for (let b = 1; b <= 4; b++) {
+      barsHtml += `<div class="explore-bar ${b <= bars ? 'efilled' : ''}"></div>`;
+    }
+
+    let convHtml = '';
+    if (!isCurrent) {
+      convHtml = '<div class="explore-conv-scale">';
+      for (let lvl = 100; lvl <= 500; lvl += 100) {
+        convHtml += `<span style="left:${((lvl - 100) / 400) * 100}%">${lvl}</span>`;
+      }
+      convHtml += '</div>';
+      pillars.forEach((pl, i) => {
+        const current = scores[i];
+        const target = pat.targets[i];
+        const gap = target - current;
+        const scorePct = ((current - 100) / 400) * 100;
+        const targetPct = ((target - 100) / 400) * 100;
+        const gapHtml = gap > 0
+          ? `<div class="explore-conv-gap" style="left:${scorePct}%;width:${targetPct - scorePct}%"></div>`
+          : '';
+        convHtml += `<div class="explore-conv-row">
+          <div class="explore-conv-name">${pl.short}</div>
+          <div class="explore-conv-track">
+            ${gapHtml}
+            <div class="explore-conv-target" style="left:${targetPct}%"></div>
+            <div class="explore-conv-dot" style="left:${scorePct}%"></div>
+          </div>
+          <div class="explore-conv-val">${current}</div>
+        </div>`;
+      });
+      convHtml += '<div class="explore-conv-legend">';
+      convHtml += '<span class="explore-conv-legend-item"><span class="explore-conv-legend-dot"></span> Your score</span>';
+      convHtml += `<span class="explore-conv-legend-item"><span class="explore-conv-legend-star">★</span> ${pat.name} target</span>`;
+      convHtml += '</div>';
+    }
+
+    const cardCls = `explore-card ${colClass}${isCurrent ? ' explore-current' : ''}`;
+    const clickAttr = isCurrent ? '' : `onclick="toggleExploreCard(this)"`;
+    const rightSide = isCurrent
+      ? '<span class="explore-current-tag">Currently viewing</span>'
+      : `<div class="explore-bars">${barsHtml}</div><span class="explore-chevron">▶</span>`;
+
+    const detailInner = isCurrent ? '' : `
+      <div class="explore-detail">
+        <div class="explore-detail-inner">
+          <div class="explore-scenario">\u201C${scenarios[id]}\u201D</div>
+          ${convHtml}
+          <button class="explore-view-btn" onclick="event.stopPropagation(); switchPattern(${id})">View Full Analysis →</button>
+        </div>
+      </div>`;
+
+    html += `<div class="${cardCls}" ${clickAttr}>
+      <div class="explore-card-top">
+        <span class="explore-num">${id}</span>
+        <div class="explore-info">
+          <div class="explore-name">${pat.name}</div>
+          <div class="explore-column-tag">${colNames[col]}</div>
+        </div>
+        ${rightSide}
+      </div>
+      ${detailInner}
+    </div>`;
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
+window.toggleExploreCard = function(el) {
+  const wasOpen = el.classList.contains('explore-open');
+  document.querySelectorAll('.explore-card.explore-open').forEach(c => c.classList.remove('explore-open'));
+  if (!wasOpen) el.classList.add('explore-open');
+};
+
+window.switchPattern = function(patternId) {
+  state.suggestedPattern = patternId;
+  transition(renderPhase4);
+};
+
+/* ============================================================
+   JOURNEY LADDER (SVG)
+   ============================================================ */
+function renderLadder(scores, targets) {
+  const W = 900, H = 500;
+  const M = {t:35, r:25, b:70, l:85};
+  const UW = W - M.l - M.r;
+  const UH = H - M.t - M.b;
+  const CW = UW / 8;
+
+  const lY = lvl => M.t + UH * (1 - (lvl - 100) / 400);
+  const pX = i => M.l + CW * (i + 0.5);
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px" xmlns="http://www.w3.org/2000/svg">`;
+
+  // Background
+  s += `<rect x="${M.l}" y="${M.t}" width="${UW}" height="${UH}" fill="#0e1117" rx="4"/>`;
+
+  // Horizontal grid lines + level labels
+  for (let lvl = 100; lvl <= 500; lvl += 100) {
+    const y = lY(lvl);
+    s += `<line x1="${M.l}" y1="${y}" x2="${M.l+UW}" y2="${y}" stroke="#2a3040" stroke-width="1"/>`;
+    s += `<text x="${M.l-12}" y="${y+1}" text-anchor="end" fill="#8b949e" font-size="12" font-family="DM Sans,sans-serif" dominant-baseline="middle">${lvl}</text>`;
+    s += `<text x="${M.l-12}" y="${y+14}" text-anchor="end" fill="#656d76" font-size="9" font-family="DM Sans,sans-serif">${levelNames[lvl]}</text>`;
+  }
+
+  // Vertical dividers
+  for (let i = 1; i < 8; i++) {
+    const x = M.l + CW * i;
+    s += `<line x1="${x}" y1="${M.t}" x2="${x}" y2="${M.t+UH}" stroke="#2a3040" stroke-width="0.5"/>`;
+  }
+
+  // Pillar labels
+  pillars.forEach((p, i) => {
+    const x = pX(i);
+    s += `<text x="${x}" y="${M.t+UH+22}" text-anchor="middle" fill="#e6edf3" font-size="11" font-weight="600" font-family="DM Sans,sans-serif">${p.short}</text>`;
+  });
+
+  // Data markers per pillar
+  pillars.forEach((p, i) => {
+    const cx = pX(i);
+    const cur = scores[i];
+    const curY = lY(cur);
+    const tgt = targets ? targets[i] : null;
+
+    // Connecting line from current to target
+    if (tgt !== null && tgt > cur) {
+      s += `<line x1="${cx}" y1="${curY}" x2="${cx}" y2="${lY(tgt)}" stroke="#f0f0f0" stroke-width="1.5" stroke-dasharray="3 3" stroke-linecap="round"/>`;
+    }
+
+    // Target (white diamond)
+    if (tgt !== null) {
+      const ty = lY(tgt);
+      s += `<rect x="${cx-7}" y="${ty-7}" width="14" height="14" fill="none" stroke="#f0f0f0" stroke-width="2" transform="rotate(45 ${cx} ${ty})">
+        <title>Target: ${tgt}</title></rect>`;
+    }
+
+    // Assessed current (filled blue circle)
+    s += `<circle cx="${cx}" cy="${curY}" r="9" fill="#4393e5">
+      <title>${p.short}: ${cur}</title></circle>`;
+    s += `<text x="${cx}" y="${curY + 1}" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" font-family="DM Sans,sans-serif" dominant-baseline="middle">${cur}</text>`;
+  });
+
+  s += '</svg>';
+  $('ladder-svg').innerHTML = s;
+}
+
+/* ============================================================
+   RADAR CHART (Chart.js)
+   ============================================================ */
+function renderRadar(scores, targets) {
+  const ctx = $('radar-canvas').getContext('2d');
+  const datasets = [
+    {
+      label: 'Your Assessment',
+      data: scores,
+      borderColor: '#4393e5',
+      backgroundColor: 'rgba(67,147,229,0.08)',
+      borderWidth: 2,
+      pointStyle: 'circle',
+      pointRadius: 5,
+      pointBackgroundColor: '#4393e5',
+      pointBorderColor: '#4393e5'
+    }
+  ];
+
+  if (targets) {
+    datasets.push({
+      label: 'Target',
+      data: targets,
+      borderColor: '#f0f0f0',
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      borderDash: [3, 3],
+      pointStyle: 'rectRot',
+      pointRadius: 6,
+      pointBackgroundColor: 'transparent',
+      pointBorderColor: '#f0f0f0',
+      pointBorderWidth: 2
+    });
+  }
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: pillars.map(p => p.short),
+      datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        r: {
+          min: 0,
+          max: 500,
+          ticks: {stepSize:100, color:'#656d76', backdropColor:'transparent', font:{family:'DM Sans'}},
+          grid: {color:'#2a3040'},
+          angleLines: {color:'#2a3040'},
+          pointLabels: {color:'#e6edf3', font:{family:'DM Sans', size:11, weight:'600'}}
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            color:'#e6edf3',
+            font:{family:'DM Sans', size:12},
+            usePointStyle: true,
+            padding: 20
+          }
+        }
+      }
+    }
+  });
+}
+
+window.toggleGapRow = function(el) {
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.hero-conv-row.open').forEach(r => {
+    r.classList.remove('open');
+    if (r.nextElementSibling) r.nextElementSibling.classList.remove('open');
+  });
+  if (!isOpen) {
+    el.classList.add('open');
+    if (el.nextElementSibling) el.nextElementSibling.classList.add('open');
+  }
+};
+
+/* ============================================================
+   START OVER
+   ============================================================ */
+window.startOver = function() {
+  state.phase = 1;
+  state.dtStep = 0;
+  state.suggestedPattern = null;
+  state.engine = null;
+  state.selectedAnswer = null;
+  renderSteps();
+  transition(renderPhase1);
+};
+
+/* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+window.toggleTheme = function() {
+  const isLight = document.documentElement.classList.toggle('light-mode');
+  document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('adoptionpulse-theme', isLight ? 'light' : 'dark');
+};
+
+// Restore saved preference (default to light)
+(function() {
+  const saved = localStorage.getItem('adoptionpulse-theme');
+  if (saved !== 'dark') {
+    document.documentElement.classList.add('light-mode');
+    document.getElementById('theme-icon').textContent = '🌙';
+  }
+})();
+
+/* ============================================================
+   PDF DOWNLOAD
+   ============================================================ */
+window.downloadPDF = function() {
+  try {
+  if (typeof html2pdf !== 'function') {
+    alert('PDF library failed to load. Please check your internet connection or ad blocker and refresh the page.');
+    return;
+  }
+
+  const scoreMap = state.engine.getScores();
+  const scores = pillars.map(p => scoreMap[p.id]);
+  const targets = patternTargets[state.suggestedPattern]?.targets || [];
+  const overall = roundTo50(scores.reduce((a,b)=>a+b,0) / scores.length);
+  const overallName = levelNames[Math.min(500, Math.max(100, Math.round(overall/100)*100))];
+  const patternName = patternTargets[state.suggestedPattern]?.name || '';
+  const answeredCount = state.engine.getProgress().answered;
+  const dateStr = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+  const scenarioText = scenarios[state.suggestedPattern] || '';
+
+  // Pillar score cards
+  const scoreCardsHtml = pillars.map((p, i) => {
+    const s = scores[i];
+    const ln = levelNames[Math.min(500, Math.max(100, Math.round(s/100)*100))];
+    return `<td style="text-align:center;padding:7px 4px;background:#f4f6fa;border-radius:5px;width:20%">
+      <div style="font-size:20px;font-weight:700;color:#2b6ec2">${s}</div>
+      <div style="font-size:8px;color:#888;margin-top:1px">${ln}</div>
+      <div style="font-size:9px;color:#222;margin-top:2px;font-weight:600">${p.short}</div>
+    </td>`;
+  }).join('<td style="width:4px"></td>');
+
+  // RAI score for PDF
+  const pdfRaiScore = state.engine.getRaiScore();
+  const pdfRaiLevelName = pdfRaiScore ? levelNames[Math.min(500, Math.max(100, Math.round(pdfRaiScore/100)*100))] : null;
+
+  // Convergence chart rows
+  const convRowsHtml = pillars.map((p, i) => {
+    const s = scores[i], t = targets[i] || s;
+    const scorePct = ((s - 100) / 400) * 100;
+    const targetPct = ((t - 100) / 400) * 100;
+    const gap = t - s;
+    const gapFill = gap > 0
+      ? `<div style="position:absolute;top:2px;bottom:2px;left:${scorePct}%;width:${targetPct-scorePct}%;background:${gap<=100?'rgba(184,134,11,0.18)':'rgba(196,77,116,0.18)'};border-radius:2px"></div>`
+      : '';
+    return `<tr>
+      <td style="font-size:9px;color:#333;font-weight:600;padding:3px 6px 3px 0;width:75px">${p.short}</td>
+      <td style="padding:3px 0"><div style="position:relative;height:14px;background:#eef1f6;border-radius:2px">
+        ${gapFill}
+        <div style="position:absolute;top:50%;left:${targetPct}%;transform:translate(-50%,-50%);color:#b8860b;font-size:10px;z-index:2">★</div>
+        <div style="position:absolute;top:50%;left:${scorePct}%;transform:translate(-50%,-50%);width:8px;height:8px;background:#2b6ec2;border-radius:50%;border:2px solid #fff;z-index:3"></div>
+      </div></td>
+      <td style="font-size:9px;color:#555;padding:3px 0 3px 6px;width:28px;text-align:right">${s}</td>
+    </tr>`;
+  }).join('');
+
+  // Gap analysis rows
+  const gapRowsHtml = pillars.map((p, i) => {
+    const s = scores[i], t = targets[i] || s, gap = t - s;
+    let statusHtml, statusBg, statusColor;
+    if (gap <= 0) { statusHtml = 'On Track'; statusBg = '#e6f5ef'; statusColor = '#00967a'; }
+    else if (gap <= 100) { statusHtml = 'Gap ' + gap; statusBg = '#fdf5e6'; statusColor = '#b8860b'; }
+    else { statusHtml = 'Gap ' + gap; statusBg = '#fce8ee'; statusColor = '#c44d74'; }
+    const acts = getNextActivities(p.id, s);
+    const recHtml = gap <= 0
+      ? '<span style="color:#00967a">Maintain this strength</span>'
+      : acts.map(a => `<span style="display:inline-block;background:#f0f2f5;border-radius:3px;padding:1px 5px;margin:1px 2px 1px 0;font-size:7px">${a.icon} ${a.action}</span>`).join('');
+    return `<tr>
+      <td style="padding:4px 6px;font-size:9px;font-weight:600;color:#222;border-bottom:1px solid #eee">${p.short}</td>
+      <td style="padding:4px 6px;font-size:9px;text-align:center;border-bottom:1px solid #eee">${s}</td>
+      <td style="padding:4px 6px;font-size:9px;text-align:center;border-bottom:1px solid #eee">${t}</td>
+      <td style="padding:4px 6px;border-bottom:1px solid #eee"><span style="padding:1px 6px;border-radius:8px;font-size:8px;font-weight:600;background:${statusBg};color:${statusColor}">${statusHtml}</span></td>
+      <td style="padding:4px 6px;font-size:8px;color:#555;border-bottom:1px solid #eee;line-height:1.5">${recHtml}</td>
+    </tr>`;
+  }).join('');
+
+  // Pattern readiness rows
+  const colColors = ['#00967a', '#b8860b', '#c44d74'];
+  const patternRowsHtml = Object.entries(patternTargets).map(([id, pat]) => {
+    const col = PATTERNS[id].column;
+    const bars = computeReadiness(scores, pat.targets);
+    const isCurrent = String(id) === String(state.suggestedPattern);
+    let barsHtml = '';
+    for (let b = 1; b <= 4; b++) {
+      barsHtml += `<span style="display:inline-block;width:14px;height:6px;margin-right:2px;border-radius:1px;background:${b<=bars?colColors[col]:'#ddd'}"></span>`;
+    }
+    return `<tr${isCurrent?' style="background:#f0f6ff"':''}>
+      <td style="padding:3px 6px;font-size:9px;font-weight:${isCurrent?'700':'400'};color:#222;border-bottom:1px solid #eee">${pat.name}${isCurrent?' ●':''}</td>
+      <td style="padding:3px 6px;font-size:8px;color:#666;border-bottom:1px solid #eee">${COLUMNS[col]}</td>
+      <td style="padding:3px 6px;border-bottom:1px solid #eee">${barsHtml}</td>
+    </tr>`;
+  }).join('');
+
+  const pdfHtml = `<div style="font-family:Helvetica,Arial,sans-serif;color:#222;width:794px;background:#fff">
+      <div style="background:#0e1117;padding:20px 44px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:16px;font-weight:700;color:#e8eaed">AdoptionPulse</div>
+          <div style="font-size:9px;color:#888">${dateStr} · ${answeredCount} questions</div>
+        </div>
+        <div style="height:3px;margin-top:8px;border-radius:2px;background:linear-gradient(90deg,#00d4aa,#ff9f43,#ff6b8a)"></div>
+      </div>
+
+      <div style="padding:20px 44px 0">
+        <div style="display:flex;gap:20px;margin-bottom:16px">
+          <div style="flex:1">
+            <div style="font-size:20px;font-weight:700;color:#222;line-height:1.2;margin-bottom:10px">Frontier Transformation Readiness Assessment</div>
+            <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Selected Pattern</div>
+            <div style="font-size:14px;font-weight:700;color:#2b6ec2;margin-bottom:5px">${patternName}</div>
+            <div style="background:#f8f9fb;border-left:3px solid #2b6ec2;padding:6px 10px;border-radius:0 5px 5px 0">
+              <div style="font-size:8.5px;color:#555;line-height:1.4;font-style:italic">\u201C${scenarioText}\u201D</div>
+            </div>
+          </div>
+          <div style="text-align:center;padding:10px 20px;background:#f4f6fa;border-radius:8px;min-width:90px;align-self:center">
+            <div style="font-size:30px;font-weight:700;color:#2b6ec2">${overall}</div>
+            <div style="font-size:9px;color:#888">${overallName}</div>
+            <div style="font-size:7px;color:#aaa;margin-top:1px">Overall Score</div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:6px">Pillar Scores</div>
+        <table style="width:100%;border-collapse:separate;border-spacing:3px;margin-bottom:4px"><tr>${scoreCardsHtml}</tr></table>
+        ${pdfRaiScore ? `<div style="display:inline-flex;align-items:center;gap:4px;background:#fdf8e8;border:1px solid #e8d48a;border-radius:12px;padding:2px 10px 2px 6px;margin-bottom:8px;float:right">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#7a6608" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span style="font-size:8px;color:#7a6608;font-weight:500">Responsible AI</span>
+          <span style="font-size:10px;font-weight:700;color:#7a6608">${pdfRaiScore}</span>
+          <span style="font-size:7px;color:#7a6608">${pdfRaiLevelName}</span>
+        </div><div style="clear:both"></div>` : ''}
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">Convergence to Target</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:2px">${convRowsHtml}</table>
+        <div style="font-size:7px;color:#888;margin-bottom:12px">
+          <span style="display:inline-block;width:6px;height:6px;background:#2b6ec2;border-radius:50%;vertical-align:middle;margin-right:2px"></span>Your score
+          <span style="margin-left:8px;color:#b8860b">★</span> ${patternName} target
+        </div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">Gap Analysis &amp; Recommendations</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
+          <thead><tr style="background:#f4f6fa">
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:left">Pillar</th>
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:center">Score</th>
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:center">Target</th>
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:left">Status</th>
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:left">Recommended Programs</th>
+          </tr></thead>
+          <tbody>${gapRowsHtml}</tbody>
+        </table>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">Pattern Readiness</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+          <thead><tr style="background:#f4f6fa">
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:left">Pattern</th>
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:left">Category</th>
+            <th style="padding:3px 6px;font-size:8px;color:#555;text-align:left">Readiness</th>
+          </tr></thead>
+          <tbody>${patternRowsHtml}</tbody>
+        </table>
+
+        <div style="border-top:1px solid #eee;padding-top:6px;font-size:7px;color:#aaa;display:flex;justify-content:space-between">
+          <span>adoptionpulse.com</span>
+          <span>Frontier Transformation Readiness Assessment</span>
+        </div>
+      </div>
+  </div>`;
+
+  const container = document.createElement('div');
+  container.style.cssText = 'position:absolute;left:0;top:0;z-index:-9999;opacity:0;overflow:hidden;width:794px';
+  container.innerHTML = pdfHtml;
+  document.body.appendChild(container);
+
+  // Show generating feedback on the button
+  const btn = document.querySelector('[onclick="downloadPDF()"]');
+  const origLabel = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>Generating PDF\u2026';
+  }
+
+  html2pdf().set({
+    margin: 0,
+    filename: 'AdoptionPulse-Assessment.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 794, scrollX: 0, scrollY: 0 },
+    jsPDF: { unit: 'px', format: [794, 1122], orientation: 'portrait', hotfixes: ['px_scaling'] },
+    pagebreak: { mode: ['css'] }
+  }).from(container.firstElementChild).save().then(() => {
+    document.body.removeChild(container);
+    if (btn) { btn.disabled = false; btn.innerHTML = origLabel; }
+  }).catch((err) => {
+    console.error('PDF generation failed:', err);
+    document.body.removeChild(container);
+    if (btn) { btn.disabled = false; btn.innerHTML = origLabel; }
+    alert('PDF generation failed. Please try again or check the browser console for details.');
+  });
+
+  } catch (err) {
+    console.error('PDF download error:', err);
+    alert('PDF generation failed: ' + err.message);
+  }
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderSteps();
+renderPhase1();
+</script>
+</body>
+</html>
