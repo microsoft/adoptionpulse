@@ -1020,11 +1020,16 @@ header {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2;
-  font-size: 0.9rem;
+  z-index: 4;
+  font-size: 1.05rem;
   line-height: 1;
-  color: var(--light);
-  opacity: 0.6;
+  color: #b8860b;
+  opacity: 1;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 4px #fff,
+    0 0 6px #fff;
+  pointer-events: none;
 }
 .hero-conv-target::after {
   content: '★';
@@ -1076,9 +1081,9 @@ header {
   background: var(--blue);
 }
 .hero-conv-legend-target {
-  font-size: 0.7rem;
-  color: var(--light);
-  opacity: 0.6;
+  font-size: 0.8rem;
+  color: #b8860b;
+  opacity: 1;
   line-height: 1;
 }
 
@@ -1255,6 +1260,34 @@ header {
 .focus-pillar-icon.on-track { background: var(--blue-dim); color: var(--blue); }
 .focus-pillar-icon.caution { background: var(--amber-dim); color: var(--amber); }
 .focus-pillar-icon.attention { background: var(--pink-dim); color: var(--pink); }
+.focus-pillar.not-core { border-left-color: rgba(255,255,255,0.08); opacity: 0.72; }
+.focus-pillar-icon.not-core { background: rgba(255,255,255,0.06); color: var(--text-dim); font-size: 0.65rem; }
+
+.hero-conv-row.not-core { opacity: 0.6; }
+.hero-conv-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.explore-conv-row.not-core { opacity: 0.55; }
+.explore-conv-tag {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
 
 .focus-pillar-name {
   font-weight: 600;
@@ -1555,11 +1588,16 @@ header {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2;
-  font-size: 0.85rem;
+  z-index: 4;
+  font-size: 1rem;
   line-height: 1;
-  color: var(--light);
-  opacity: 0.6;
+  color: #b8860b;
+  opacity: 1;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 4px #fff,
+    0 0 6px #fff;
+  pointer-events: none;
 }
 .explore-conv-target::after { content: '★'; }
 .explore-conv-dot {
@@ -1601,9 +1639,9 @@ header {
   background: var(--blue);
 }
 .explore-conv-legend-star {
-  font-size: 0.65rem;
-  color: var(--light);
-  opacity: 0.6;
+  font-size: 0.75rem;
+  color: #b8860b;
+  opacity: 1;
 }
 .explore-view-btn {
   display: inline-flex;
@@ -1969,16 +2007,23 @@ class AdaptiveEngine {
       }
     }
 
-    // Determine which pillars to skip (target === 100)
-    this._skippedPillars = new Set();
-    for (let i = 0; i < this._targets.length; i++) {
-      if (this._targets[i] === 100) this._skippedPillars.add(i + 1);
+    // Per-pillar tier set: distinct non-sentinel target values across ALL patterns.
+    // Used by tier-aware refinement so cross-pattern comparison is statistically valid.
+    this._pillarTiers = new Map();
+    for (let pid = 1; pid <= 5; pid++) {
+      const set = new Set();
+      for (const pat of Object.values(patternTargets)) {
+        const t = pat.targets[pid - 1];
+        if (t > 100) set.add(t); // 100 is the "not core" sentinel
+      }
+      this._pillarTiers.set(pid, [...set].sort((a, b) => a - b));
     }
 
-    // Build anchor queue from pillar IDs 1-5
+    // Always ask all 5 anchors so previously-skipped pillars get real measurements
+    // and the user's profile is comparable against every pattern.
     this._queue = [];
     for (let pid = 1; pid <= 5; pid++) {
-      if (this._skippedPillars.has(pid) || !this._anchorByPillar.has(pid)) continue;
+      if (!this._anchorByPillar.has(pid)) continue;
       this._queue.push(this._anchorByPillar.get(pid).id);
     }
 
@@ -1989,9 +2034,9 @@ class AdaptiveEngine {
     this._totalQuestions = this._queue.length;
     this._raiQueued = false;
 
-    // Track answers per pillar ID (1-5 for pillars, 0 for RAI)
+    // Track answers per pillar ID (1-5 for pillars, 0 for RAI). No pre-seeding —
+    // every pillar gets a real anchor and (when ambiguous) refinement answers.
     this._pillarLevels = new Map();
-    for (const pid of this._skippedPillars) this._pillarLevels.set(pid, [100]);
 
     this._justTransitioned = false;
   }
@@ -2117,8 +2162,6 @@ class AdaptiveEngine {
     const brackets = {};
     for (const p of pillars) {
       const levels = this._pillarLevels.get(p.id);
-      const isSkipped = this._skippedPillars.has(p.id);
-      if (isSkipped) { brackets[p.id] = { score: 100, lo: 100, hi: 100, status: 'done' }; continue; }
       if (!levels || levels.length === 0) { brackets[p.id] = { score: null, lo: 100, hi: 500, status: 'unknown' }; continue; }
       const avg = levels.reduce((a, b) => a + b, 0) / levels.length;
       const score = roundTo50(avg);
@@ -2144,14 +2187,11 @@ class AdaptiveEngine {
   _evaluateRefinement() {
     this._pillarsNeedingRefinement = [];
     for (let pid = 1; pid <= 5; pid++) {
-      if (this._skippedPillars.has(pid)) continue;
-      const targetLevel = this._targets[pid - 1];
       const anchorQ = this._anchorByPillar.get(pid);
       if (!anchorQ) continue;
       const anchorLevel = this._answers.get(anchorQ.id);
       if (anchorLevel === undefined) continue;
-      // Fuzzy zone: within 100 points of target
-      if (anchorLevel >= targetLevel - 100 && anchorLevel <= targetLevel) {
+      if (this._shouldRefineTierAware(anchorLevel, this._pillarTiers.get(pid) || [])) {
         this._pillarsNeedingRefinement.push(pid);
         const refinements = this._refinementByPillar.get(pid) || [];
         for (const rq of refinements) this._queue.push(rq.id);
@@ -2164,6 +2204,23 @@ class AdaptiveEngine {
     }
     this._totalQuestions = this._answers.size + this._queue.length;
     this._phase = this._queue.length > 0 ? 'refinement' : 'complete';
+  }
+
+  // Refine only when the anchor answer is AMBIGUOUS relative to the set of
+  // target values that real patterns use for this pillar. Saves questions when
+  // the anchor lands exactly on a tier or above the ceiling.
+  _shouldRefineTierAware(anchorLevel, tiers) {
+    if (tiers.length === 0) return false;
+    const minTier = tiers[0];
+    const maxTier = tiers[tiers.length - 1];
+    if (anchorLevel >= maxTier) return false;       // at/above ceiling — definitive
+    if (tiers.includes(anchorLevel)) return false;  // exactly on a tier — definitive
+    if (anchorLevel < minTier) {
+      // Below the lowest tier — only refine if reasonably close (within one band)
+      return anchorLevel >= minTier - 100;
+    }
+    // Strictly between two adjacent tiers — needs precision
+    return true;
   }
 }
 
@@ -2663,16 +2720,19 @@ function renderPhase4() {
   let pillarRows = pillars.map((p, i) => {
     const current = scores[i];
     const target = targets ? targets[i] : current;
+    const notCore = target === 100;
     const gap = target - current;
     let statusCls, statusIcon;
-    if (gap <= 0) { statusCls = 'on-track'; statusIcon = '✓'; }
+    if (notCore) { statusCls = 'not-core'; statusIcon = '○'; }
+    else if (gap <= 0) { statusCls = 'on-track'; statusIcon = '✓'; }
     else if (gap <= 100) { statusCls = 'caution'; statusIcon = '→'; }
     else { statusCls = 'attention'; statusIcon = '↑'; }
 
     const targetLvl = Math.min(500, Math.max(200, Math.ceil(target / 100) * 100));
-    const rec = gap <= 0
-      ? "Maintain this strength"
-      : (pillarRecs[p.id]?.[targetLvl] || pillarRecs[p.id]?.[Math.min(500, targetLvl + 100)] || "Strengthen this area");
+    let rec;
+    if (notCore) rec = "Not core to this pattern — explore the cards below to see where this strength fits";
+    else if (gap <= 0) rec = "Maintain this strength";
+    else rec = (pillarRecs[p.id]?.[targetLvl] || pillarRecs[p.id]?.[Math.min(500, targetLvl + 100)] || "Strengthen this area");
 
     return `
       <div class="focus-pillar ${statusCls}">
@@ -2680,7 +2740,7 @@ function renderPhase4() {
           <span class="focus-pillar-icon ${statusCls}">${statusIcon}</span>
           <span class="focus-pillar-name">${p.short}</span>
           <span class="focus-pillar-score">${current}</span>
-          ${gap > 0 ? `<span class="focus-pillar-gap">→ ${target}</span>` : ''}
+          ${gap > 0 && !notCore ? `<span class="focus-pillar-gap">→ ${target}</span>` : ''}
         </div>
         <div class="focus-pillar-rec">${rec}</div>
       </div>`;
@@ -2696,21 +2756,25 @@ function renderPhase4() {
   pillars.forEach((pl, i) => {
     const current = scores[i];
     const target = targets ? targets[i] : current;
+    const notCore = target === 100;
     const scorePct = ((current - 100) / 400) * 100;
     const targetPct = ((target - 100) / 400) * 100;
     const gap = target - current;
-    let statusCls = gap <= 0 ? 'on-track' : (gap <= 100 ? 'caution' : 'attention');
-    const gapHtml = gap > 0 ? `<div class="hero-conv-gap" style="left:${scorePct}%;width:${targetPct - scorePct}%"></div>` : '';
-    const hasGap = gap > 0;
+    const gapHtml = (gap > 0 && !notCore) ? `<div class="hero-conv-gap" style="left:${scorePct}%;width:${targetPct - scorePct}%"></div>` : '';
+    const hasGap = gap > 0 && !notCore;
+    const targetMarker = notCore ? '' : `<div class="hero-conv-target" style="left:${targetPct}%"></div>`;
     const chevron = hasGap ? '<span class="hero-conv-chevron">▶</span>' : '';
-    const rowCls = hasGap ? 'hero-conv-row has-gap' : 'hero-conv-row';
+    const rowCls = hasGap ? 'hero-conv-row has-gap' : (notCore ? 'hero-conv-row not-core' : 'hero-conv-row');
     const clickAttr = hasGap ? `onclick="toggleGapRow(this)"` : '';
+    const pillarLabel = notCore
+      ? `${pl.name}<span class="hero-conv-tag">not core to your pattern</span>`
+      : `${pl.name}${chevron}`;
 
     heroConvHtml += `<div class="${rowCls}" ${clickAttr}>
-      <div class="hero-conv-pillar">${pl.name}${chevron}</div>
+      <div class="hero-conv-pillar">${pillarLabel}</div>
       <div class="hero-conv-track">
         ${gapHtml}
-        <div class="hero-conv-target" style="left:${targetPct}%"></div>
+        ${targetMarker}
         <div class="hero-conv-dot" style="left:${scorePct}%"></div>
       </div>
       <div class="hero-conv-val">${current}</div>
@@ -2835,17 +2899,21 @@ function buildExploreSection(scores, currentPatternId) {
       pillars.forEach((pl, i) => {
         const current = scores[i];
         const target = pat.targets[i];
+        const notCore = target === 100;
         const gap = target - current;
         const scorePct = ((current - 100) / 400) * 100;
         const targetPct = ((target - 100) / 400) * 100;
-        const gapHtml = gap > 0
+        const gapHtml = (gap > 0 && !notCore)
           ? `<div class="explore-conv-gap" style="left:${scorePct}%;width:${targetPct - scorePct}%"></div>`
           : '';
-        convHtml += `<div class="explore-conv-row">
-          <div class="explore-conv-name">${pl.short}</div>
+        const targetMarker = notCore
+          ? ''
+          : `<div class="explore-conv-target" style="left:${targetPct}%"></div>`;
+        convHtml += `<div class="explore-conv-row${notCore ? ' not-core' : ''}">
+          <div class="explore-conv-name">${pl.short}${notCore ? '<span class="explore-conv-tag">n/a</span>' : ''}</div>
           <div class="explore-conv-track">
             ${gapHtml}
-            <div class="explore-conv-target" style="left:${targetPct}%"></div>
+            ${targetMarker}
             <div class="explore-conv-dot" style="left:${scorePct}%"></div>
           </div>
           <div class="explore-conv-val">${current}</div>
@@ -2945,13 +3013,13 @@ function renderLadder(scores, targets) {
     const curY = lY(cur);
     const tgt = targets ? targets[i] : null;
 
-    // Connecting line from current to target
-    if (tgt !== null && tgt > cur) {
+    // Connecting line from current to target (suppress for "not core" pillars)
+    if (tgt !== null && tgt > cur && tgt > 100) {
       s += `<line x1="${cx}" y1="${curY}" x2="${cx}" y2="${lY(tgt)}" stroke="#f0f0f0" stroke-width="1.5" stroke-dasharray="3 3" stroke-linecap="round"/>`;
     }
 
-    // Target (white diamond)
-    if (tgt !== null) {
+    // Target (white diamond) — omitted when target is the 100 "not core" sentinel
+    if (tgt !== null && tgt > 100) {
       const ty = lY(tgt);
       s += `<rect x="${cx-7}" y="${ty-7}" width="14" height="14" fill="none" stroke="#f0f0f0" stroke-width="2" transform="rotate(45 ${cx} ${ty})">
         <title>Target: ${tgt}</title></rect>`;
@@ -3116,17 +3184,22 @@ window.downloadPDF = function() {
   // Convergence chart rows
   const convRowsHtml = pillars.map((p, i) => {
     const s = scores[i], t = targets[i] || s;
+    const notCore = t === 100;
     const scorePct = ((s - 100) / 400) * 100;
     const targetPct = ((t - 100) / 400) * 100;
     const gap = t - s;
-    const gapFill = gap > 0
+    const gapFill = (gap > 0 && !notCore)
       ? `<div style="position:absolute;top:2px;bottom:2px;left:${scorePct}%;width:${targetPct-scorePct}%;background:${gap<=100?'rgba(184,134,11,0.18)':'rgba(196,77,116,0.18)'};border-radius:2px"></div>`
       : '';
+    const starHtml = notCore
+      ? ''
+      : `<div style="position:absolute;top:50%;left:${targetPct}%;transform:translate(-50%,-50%);color:#b8860b;font-size:10px;z-index:2">★</div>`;
+    const nameSuffix = notCore ? ' <span style="color:#888;font-weight:400;font-size:8px">· n/a</span>' : '';
     return `<tr>
-      <td style="font-size:9px;color:#333;font-weight:600;padding:3px 6px 3px 0;width:75px">${p.short}</td>
+      <td style="font-size:9px;color:#333;font-weight:600;padding:3px 6px 3px 0;width:75px">${p.short}${nameSuffix}</td>
       <td style="padding:3px 0"><div style="position:relative;height:14px;background:#eef1f6;border-radius:2px">
         ${gapFill}
-        <div style="position:absolute;top:50%;left:${targetPct}%;transform:translate(-50%,-50%);color:#b8860b;font-size:10px;z-index:2">★</div>
+        ${starHtml}
         <div style="position:absolute;top:50%;left:${scorePct}%;transform:translate(-50%,-50%);width:8px;height:8px;background:#2b6ec2;border-radius:50%;border:2px solid #fff;z-index:3"></div>
       </div></td>
       <td style="font-size:9px;color:#555;padding:3px 0 3px 6px;width:28px;text-align:right">${s}</td>
@@ -3136,14 +3209,18 @@ window.downloadPDF = function() {
   // Gap analysis rows
   const gapRowsHtml = pillars.map((p, i) => {
     const s = scores[i], t = targets[i] || s, gap = t - s;
+    const notCore = t === 100;
     let statusHtml, statusBg, statusColor;
-    if (gap <= 0) { statusHtml = 'On Track'; statusBg = '#e6f5ef'; statusColor = '#00967a'; }
+    if (notCore) { statusHtml = 'Not core'; statusBg = '#f0f2f5'; statusColor = '#666'; }
+    else if (gap <= 0) { statusHtml = 'On Track'; statusBg = '#e6f5ef'; statusColor = '#00967a'; }
     else if (gap <= 100) { statusHtml = 'Gap ' + gap; statusBg = '#fdf5e6'; statusColor = '#b8860b'; }
     else { statusHtml = 'Gap ' + gap; statusBg = '#fce8ee'; statusColor = '#c44d74'; }
     const acts = getNextActivities(p.id, s);
-    const recHtml = gap <= 0
-      ? '<span style="color:#00967a">Maintain this strength</span>'
-      : acts.map(a => `<span style="display:inline-block;background:#f0f2f5;border-radius:3px;padding:1px 5px;margin:1px 2px 1px 0;font-size:7px">${a.icon} ${a.action}</span>`).join('');
+    const recHtml = notCore
+      ? '<span style="color:#777">Not core to this pattern</span>'
+      : (gap <= 0
+        ? '<span style="color:#00967a">Maintain this strength</span>'
+        : acts.map(a => `<span style="display:inline-block;background:#f0f2f5;border-radius:3px;padding:1px 5px;margin:1px 2px 1px 0;font-size:7px">${a.icon} ${a.action}</span>`).join(''));
     return `<tr>
       <td style="padding:4px 6px;font-size:9px;font-weight:600;color:#222;border-bottom:1px solid #eee">${p.short}</td>
       <td style="padding:4px 6px;font-size:9px;text-align:center;border-bottom:1px solid #eee">${s}</td>
